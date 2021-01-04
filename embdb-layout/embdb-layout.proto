@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package embDB_protolayout;
+
+message Header { uint32 version = 1; }
+
+enum DataType {
+  NONE = 0; STRING = 1; UINT32 = 2; INT32 = 3; UINT64 = 4; INT64 = 5; FLOAT = 6;
+  DOUBLE = 7;
+  BOOL = 8;
+  BYTES = 9;
+}
+
+message DataItem {
+  int64 timestamp = 1;
+  oneof data {
+    string dataString = 2;
+    uint32 dataUint32 = 3;
+    int32 dataInt32 = 4;
+    uint64 dataUint64 = 5;
+    int64 dataInt64 = 6;
+    float dataFloat = 7;
+    double dataDouble = 8;
+    bool dataBool = 9;
+    bytes dataBytes = 10;
+  }
+}
+
+message DataRow {
+  uint64 hash = 1;
+  string name = 2;
+  DataType type = 3;
+  uint32 maxItems = 4;
+  uint32 curItem = 5;
+  bool overflow = 6;
+  repeated DataItem items = 7;
+}
+
+message DataLayout {
+  Header header = 1;
+  repeated DataRow rows = 2;
+}
