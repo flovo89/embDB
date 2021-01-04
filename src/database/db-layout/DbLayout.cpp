@@ -18,6 +18,8 @@
 
 #include "DbLayout.hpp"
 
+#include "../../exception/Exception.hpp"
+
 namespace embDB_database {
 
 //--------------------------------------------------------------------------------------------
@@ -175,27 +177,108 @@ DbErrorCode DbLayout::deleteRow(std::string name) {
 
 //--------------------------------------------------------------------------------------------
 DbErrorCode DbLayout::getAllItems(std::string name,
-                                  std::list<DbElement>& items) {
-  (void)name;
-  (void)items;
+                                  std::list<DbElement>& elements) {
+  RepeatedPtrField<DataItem> dataItems;
+  DataRow row;
+  bool overflow;
+  uint32_t maxItems;
+  uint32_t curItem;
+  DbElementType readtype;
+  DbElement element;
+
+  if (getRow(name, row)) return DbErrorCode::NOTFOUND;
+
+  getType(row, readtype);
+
+  getMaxItems(row, maxItems);
+
+  getCurItem(row, curItem);
+
+  getOverflow(row, overflow);
+
+  getDataItems(row, dataItems);
+
+  elements.clear();
+  if (dataItems.size() > 0) {
+    if (overflow) {
+      for (uint32_t i = curItem; i < maxItems; i++) {
+        getDataElement(readtype, &dataItems.Get(i), element);
+        elements.push_back(element);
+      }
+    }
+    for (uint32_t i = 0; i < curItem; i++) {
+      getDataElement(readtype, &dataItems.Get(i), element);
+      elements.push_back(element);
+    }
+  }
+
   return DbErrorCode::SUCCESS;
 }
 
 //--------------------------------------------------------------------------------------------
 DbErrorCode DbLayout::getItemsBetween(std::string name, int64_t start,
                                       int64_t end,
-                                      std::list<DbElement>& items) {
-  (void)name;
-  (void)start;
-  (void)end;
-  (void)items;
-  return DbErrorCode::SUCCESS;
+                                      std::list<DbElement>& elements) {
+  std::list<DbElement> tempElements;
+  DbErrorCode err = getAllItems(name, tempElements);
+
+  if (err != DbErrorCode::SUCCESS) return err;
+
+  // Be aware that a wrong timebase leads lost order of data...
+  elements.clear();
+  for (auto& i : tempElements)
+    if ((i.getTimestamp() >= start) && (i.getTimestamp() <= end))
+      elements.push_back(i);
+
+  return err;
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayout::addItem(std::string name, std::string data) {
-  (void)data;
-  (void)name;
+DbErrorCode DbLayout::addItem(std::string name, const DbElement& element) {
+  RepeatedPtrField<DataItem>* dataItems;
+  DataRow* row;
+  bool overflow;
+  uint32_t maxItems;
+  uint32_t curItem;
+  DbElementType readtype;
+
+  if (getRowMutable(name, &row)) return DbErrorCode::NOTFOUND;
+
+  getType(*row, readtype);
+  if (readtype != element.getType()) return DbErrorCode::TYPEMISMATCH;
+
+  getMaxItems(*row, maxItems);
+
+  getCurItem(*row, curItem);
+
+  getOverflow(*row, overflow);
+
+  getDataItemsMutable(row, &dataItems);
+
+  if (curItem >= maxItems) return DbErrorCode::INTERNAL;
+
+  if (dataItems->empty() && overflow) return DbErrorCode::INTERNAL;
+
+  DataItem* it;
+  if (!overflow) {
+    it = dataItems->Add();
+  } else {
+    it = dataItems->Mutable(curItem);
+  }
+
+  it->set_timestamp(m_timestamper->getTimestampMilliseconds());
+  setDataItem(element, it);
+
+  curItem++;
+
+  if (curItem == maxItems) {
+    overflow |= true;
+    curItem = 0;
+  }
+
+  setCurItem(row, curItem);
+  setOverflow(row, overflow);
+
   return DbErrorCode::SUCCESS;
 }
 
@@ -284,6 +367,78 @@ void DbLayout::getDataItems(const DataRow& row,
 void DbLayout::getDataItemsMutable(DataRow* row,
                                    RepeatedPtrField<DataItem>** items) {
   *items = row->mutable_items();
+}
+
+//--------------------------------------------------------------------------------------------
+void DbLayout::getDataElement(DbElementType type, const DataItem* item,
+                              DbElement& element) {
+  switch (type) {
+    case DbElementType::STRING:
+      element = DbElement(item->datastring(), item->timestamp());
+      break;
+    case DbElementType::UINT32:
+      element = DbElement(item->datauint32(), item->timestamp());
+      break;
+    case DbElementType::INT32:
+      element = DbElement(item->dataint32(), item->timestamp());
+      break;
+    case DbElementType::UINT64:
+      element = DbElement(item->datauint64(), item->timestamp());
+      break;
+    case DbElementType::INT64:
+      element = DbElement(item->dataint64(), item->timestamp());
+      break;
+    case DbElementType::FLOAT:
+      element = DbElement(item->datafloat(), item->timestamp());
+      break;
+    case DbElementType::DOUBLE:
+      element = DbElement(item->datadouble(), item->timestamp());
+      break;
+    case DbElementType::BOOL:
+      element = DbElement(item->databool(), item->timestamp());
+      break;
+    case DbElementType::BYTES:
+      element = DbElement(item->databytes(), item->timestamp());
+      break;
+    default:
+      EMBDB_THROW("No valid type specified");
+  }
+}
+
+//--------------------------------------------------------------------------------------------
+void DbLayout::setDataItem(const DbElement& element, DataItem* item) {
+  switch (element.getType()) {
+    case DbElementType::STRING:
+      item->set_datastring(element.toString());
+      break;
+    case DbElementType::UINT32:
+      item->set_datauint32(element.toUint32());
+      break;
+    case DbElementType::INT32:
+      item->set_dataint32(element.toInt32());
+      break;
+    case DbElementType::UINT64:
+      item->set_datauint64(element.toUint64());
+      break;
+    case DbElementType::INT64:
+      item->set_dataint64(element.toInt64());
+      break;
+    case DbElementType::FLOAT:
+      item->set_datafloat(element.toFloat());
+      break;
+    case DbElementType::DOUBLE:
+      item->set_datadouble(element.toDouble());
+      break;
+    case DbElementType::BOOL:
+      item->set_databool(element.toBool());
+      break;
+    case DbElementType::BYTES:
+      item->set_databytes(
+          std::string(element.toBytes().begin(), element.toBytes().end()));
+      break;
+    default:
+      EMBDB_THROW("No valid type specified");
+  }
 }
 
 }  // namespace embDB_database

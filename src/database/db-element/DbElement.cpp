@@ -19,6 +19,8 @@
 
 #include <cstring>
 
+#include "../../exception/Exception.hpp"
+
 namespace embDB_database {
 
 //--------------------------------------------------------------------------------------------
@@ -137,68 +139,74 @@ DbElement::~DbElement() {}
 
 //--------------------------------------------------------------------------------------------
 DbElementType DbElement::getType() const {
-  if (m_type == DbElementType::NONE) throw "No type";
+  if (m_type == DbElementType::NONE) EMBDB_THROW("No type");
   return m_type;
 }
 
 //--------------------------------------------------------------------------------------------
 DbElement::timestamp DbElement::getTimestamp() const {
-  if (m_timestamp == c_invalidTs) throw "No timestamp";
+  if (m_timestamp == c_invalidTs) EMBDB_THROW("No timestamp");
   return m_timestamp;
 }
 
 //--------------------------------------------------------------------------------------------
 std::string DbElement::toString() const {
-  if (m_type != DbElementType::STRING) throw "Type mismatch";
+  if (m_type != DbElementType::STRING) EMBDB_THROW("Type mismatch");
   return std::get<std::string>(m_value);
 }
 
 //--------------------------------------------------------------------------------------------
 uint32_t DbElement::toUint32() const {
-  if (m_type != DbElementType::UINT32) throw "Type mismatch";
+  if (m_type != DbElementType::UINT32) EMBDB_THROW("Type mismatch");
   return std::get<uint32_t>(m_value);
 }
 
 //--------------------------------------------------------------------------------------------
 int32_t DbElement::toInt32() const {
-  if (m_type != DbElementType::INT32) throw "Type mismatch";
+  if (m_type != DbElementType::INT32) EMBDB_THROW("Type mismatch");
   return std::get<int32_t>(m_value);
 }
 
 //--------------------------------------------------------------------------------------------
 uint64_t DbElement::toUint64() const {
-  if (m_type != DbElementType::UINT64) throw "Type mismatch";
+  if (m_type != DbElementType::UINT64) EMBDB_THROW("Type mismatch");
   return std::get<uint64_t>(m_value);
 }
 
 //--------------------------------------------------------------------------------------------
 int64_t DbElement::toInt64() const {
-  if (m_type != DbElementType::INT64) throw "Type mismatch";
+  if (m_type != DbElementType::INT64) EMBDB_THROW("Type mismatch");
   return std::get<int64_t>(m_value);
 }
 
 //--------------------------------------------------------------------------------------------
 float DbElement::toFloat() const {
-  if (m_type != DbElementType::FLOAT) throw "Type mismatch";
+  if (m_type != DbElementType::FLOAT) EMBDB_THROW("Type mismatch");
   return std::get<float>(m_value);
 }
 
 //--------------------------------------------------------------------------------------------
 double DbElement::toDouble() const {
-  if (m_type != DbElementType::DOUBLE) throw "Type mismatch";
+  if (m_type != DbElementType::DOUBLE) EMBDB_THROW("Type mismatch");
   return std::get<double>(m_value);
 }
 
 //--------------------------------------------------------------------------------------------
 bool DbElement::toBool() const {
-  if (m_type != DbElementType::BOOL) throw "Type mismatch";
+  if (m_type != DbElementType::BOOL) EMBDB_THROW("Type mismatch");
   return std::get<bool>(m_value);
 }
 
 //--------------------------------------------------------------------------------------------
 std::vector<uint8_t> DbElement::toBytes() const {
-  if (m_type != DbElementType::BYTES) throw "Type mismatch";
+  if (m_type != DbElementType::BYTES) EMBDB_THROW("Type mismatch");
   return std::get<std::vector<uint8_t>>(m_value);
+}
+
+//--------------------------------------------------------------------------------------------
+DbElement &DbElement::operator=(const DbElement &element) {
+  *this = element;
+  return *this;
 }
 
 //--------------------------------------------------------------------------------------------

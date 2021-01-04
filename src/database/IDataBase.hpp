@@ -49,7 +49,7 @@ class IDataBase {
   virtual DbErrorCode getItemsBetween(std::string name, int64_t start,
                                       int64_t end,
                                       std::list<DbElement>& elements) = 0;
-  virtual DbErrorCode addItem(std::string name, std::string data) = 0;
+  virtual DbErrorCode addItem(std::string name, const DbElement& element) = 0;
 };
 
 }  // namespace embDB_database

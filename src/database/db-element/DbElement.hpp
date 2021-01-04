@@ -65,6 +65,7 @@ class DbElement {
   bool toBool() const;
   std::vector<uint8_t> toBytes() const;
 
+  DbElement &operator=(const DbElement &element);
   DbElement &operator=(const std::string &value);
   DbElement &operator=(const uint32_t &value);
   DbElement &operator=(const int32_t &value);

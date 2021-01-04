@@ -56,7 +56,8 @@ class DbLayout : public IDataBase {
   virtual DbErrorCode getItemsBetween(std::string name, int64_t start,
                                       int64_t end,
                                       std::list<DbElement>& elements) override;
-  virtual DbErrorCode addItem(std::string name, std::string data) override;
+  virtual DbErrorCode addItem(std::string name,
+                              const DbElement& element) override;
 
   std::unique_ptr<embDB_fileio::FileReader> m_reader;
   std::unique_ptr<embDB_fileio::FileWriter> m_writer;
@@ -80,6 +81,9 @@ class DbLayout : public IDataBase {
   void getDataItems(const DataRow& row,
                     RepeatedPtrField<DataItem>& items) const;
   void getDataItemsMutable(DataRow* row, RepeatedPtrField<DataItem>** items);
+  void getDataElement(DbElementType type, const DataItem* item,
+                      DbElement& element);
+  void setDataItem(const DbElement& element, DataItem* item);
 };
 
 }  // namespace embDB_database

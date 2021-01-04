@@ -10,6 +10,7 @@ set(APP_SOURCES
   utilities/ITimestamper.cpp
   utilities/DefaultHasher.cpp
   utilities/DefaultTimestamper.cpp
+  exception/Exception.cpp
   main.cpp
 )
 
