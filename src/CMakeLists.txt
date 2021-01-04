@@ -2,11 +2,19 @@
 set(APP_SOURCES
   ${PROJECT_SOURCE_DIR}/embdb-layout/cpp/embdb-layout.pb.cc
   database/db-element/DbElement.cpp
+  database/IDataBase.cpp
+  database/db-layout/DbLayout.cpp
+  file-io/FileReader.cpp
+  file-io/FileWriter.cpp
+  utilities/IHasher.cpp
+  utilities/ITimestamper.cpp
+  utilities/DefaultHasher.cpp
+  utilities/DefaultTimestamper.cpp
   main.cpp
 )
 
 # External libraries
-pkg_search_module(PROTO_BUF protobuf>=3.4.1)
+pkg_search_module(PROTO_BUF protobuf>=3.14.0)
 
 # Compile protocol buffer .proto file
 set(PROTOBUF_COMPILER "protoc" CACHE STRING "Path to protocol buffer compiler")

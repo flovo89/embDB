@@ -82,17 +82,10 @@ class DbElement {
   std::variant<std::string, uint32_t, int32_t, uint64_t, int64_t, float, double,
                bool, std::vector<uint8_t>>
       m_value;
-  // std::string m_stringValue;
-  // uint32_t m_uint32Value;
-  // int32_t m_int32Value;
-  // uint64_t m_uint64Value;
-  // int64_t m_int64Value;
-  // float m_floatValue;
-  // double m_doubleValue;
-  // bool m_boolValue;
-  // std::vector<uint8_t> m_bytesValue;
   DbElementType m_type;
   timestamp m_timestamp;
+
+  const timestamp c_invalidTs = -1;
 };
 
 }  // namespace embDB_database

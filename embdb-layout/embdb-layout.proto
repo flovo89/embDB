@@ -5,7 +5,13 @@ package embDB_protolayout;
 message Header { uint32 version = 1; }
 
 enum DataType {
-  NONE = 0; STRING = 1; UINT32 = 2; INT32 = 3; UINT64 = 4; INT64 = 5; FLOAT = 6;
+  NONE = 0; 
+  STRING = 1; 
+  UINT32 = 2; 
+  INT32 = 3; 
+  UINT64 = 4; 
+  INT64 = 5; 
+  FLOAT = 6;
   DOUBLE = 7;
   BOOL = 8;
   BYTES = 9;
