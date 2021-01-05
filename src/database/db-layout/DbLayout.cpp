@@ -372,6 +372,8 @@ void DbLayout::getDataItemsMutable(DataRow* row,
 //--------------------------------------------------------------------------------------------
 void DbLayout::getDataElement(DbElementType type, const DataItem* item,
                               DbElement& element) {
+  std::vector<uint8_t> vec;
+
   switch (type) {
     case DbElementType::STRING:
       element = DbElement(item->datastring(), item->timestamp());
@@ -398,7 +400,10 @@ void DbLayout::getDataElement(DbElementType type, const DataItem* item,
       element = DbElement(item->databool(), item->timestamp());
       break;
     case DbElementType::BYTES:
-      element = DbElement(item->databytes(), item->timestamp());
+      vec =
+          std::vector<uint8_t>(&item->databytes()[0],
+                               &item->databytes()[item->databytes().length()]);
+      element = DbElement(vec, item->timestamp());
       break;
     default:
       EMBDB_THROW("No valid type specified");
@@ -407,6 +412,8 @@ void DbLayout::getDataElement(DbElementType type, const DataItem* item,
 
 //--------------------------------------------------------------------------------------------
 void DbLayout::setDataItem(const DbElement& element, DataItem* item) {
+  std::vector<uint8_t> vec;
+
   switch (element.getType()) {
     case DbElementType::STRING:
       item->set_datastring(element.toString());
@@ -433,8 +440,8 @@ void DbLayout::setDataItem(const DbElement& element, DataItem* item) {
       item->set_databool(element.toBool());
       break;
     case DbElementType::BYTES:
-      item->set_databytes(
-          std::string(element.toBytes().begin(), element.toBytes().end()));
+      vec = element.toBytes();
+      item->set_databytes(std::string(vec.begin(), vec.end()));
       break;
     default:
       EMBDB_THROW("No valid type specified");

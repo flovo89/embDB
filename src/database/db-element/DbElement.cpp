@@ -228,7 +228,53 @@ std::vector<uint8_t> DbElement::toBytes() const {
 
 //--------------------------------------------------------------------------------------------
 DbElement &DbElement::operator=(const DbElement &element) {
-  *this = element;
+  switch (element.getType()) {
+    case DbElementType::STRING:
+      m_value = element.toString();
+      m_type = DbElementType::STRING;
+      break;
+    case DbElementType::UINT32:
+      m_value = element.toUint32();
+      m_type = DbElementType::UINT32;
+      break;
+    case DbElementType::INT32:
+      m_value = element.toInt32();
+      m_type = DbElementType::INT32;
+      break;
+    case DbElementType::UINT64:
+      m_value = element.toUint64();
+      m_type = DbElementType::UINT64;
+      break;
+    case DbElementType::INT64:
+      m_value = element.toInt64();
+      m_type = DbElementType::INT64;
+      break;
+    case DbElementType::FLOAT:
+      m_value = element.toFloat();
+      m_type = DbElementType::FLOAT;
+      break;
+    case DbElementType::DOUBLE:
+      m_value = element.toDouble();
+      m_type = DbElementType::DOUBLE;
+      break;
+    case DbElementType::BOOL:
+      m_value = element.toBool();
+      m_type = DbElementType::BOOL;
+      break;
+    case DbElementType::BYTES:
+      m_value = element.toBytes();
+      m_type = DbElementType::BYTES;
+      break;
+    default:
+      m_type = DbElementType::NONE;
+      break;
+  }
+
+  if (element.hasTimestamp())
+    m_timestamp = element.getTimestamp();
+  else
+    m_timestamp = c_invalidTs;
+
   return *this;
 }
 
