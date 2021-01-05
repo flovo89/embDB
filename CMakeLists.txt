@@ -32,6 +32,7 @@ configure_file (
 
 # Externals librarires
 find_package(PkgConfig REQUIRED)
+pkg_search_module(PROTO_BUF protobuf>=3.14.0)
 
 # Compile the app
 add_subdirectory(src)

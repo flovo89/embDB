@@ -17,9 +17,6 @@ set(APP_SOURCES
   main.cpp
 )
 
-# External libraries
-pkg_search_module(PROTO_BUF protobuf>=3.14.0)
-
 # Compile protocol buffer .proto file
 set(PROTOBUF_COMPILER "protoc" CACHE STRING "Path to protocol buffer compiler")
 add_custom_command(

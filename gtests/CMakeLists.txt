@@ -18,7 +18,12 @@ file(
 
 include_directories(
   ../src
+  ${PROTO_BUF_INCLUDE_DIRS}
   )
+
+link_directories(
+  ${PROTO_BUF_LIBRARY_DIRS}
+)
 
 set(
   SOURCES 
@@ -36,6 +41,7 @@ target_link_libraries(
   ${APP_LIB_NAME} 
   ${GMOCK_LDFLAGS}
   ${GTEST_LDFLAGS}
+  ${PROTO_BUF_LIBRARIES}
   )
 
 target_compile_options(

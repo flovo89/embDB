@@ -142,7 +142,7 @@ DbErrorCode DbLayout::rowExists(std::string name, bool& exists) {
   exists = false;
 
   DataRow row;
-  if (getRow(name, row)) return DbErrorCode::NOTFOUND;
+  if (getRow(name, row)) return DbErrorCode::SUCCESS;
 
   // If this occurs, two strings might have generated same hash...
   std::string rowName;
