@@ -24,116 +24,136 @@
 namespace embDB_database {
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement()
-    : m_type(DbElementType::NONE), m_timestamp(c_invalidTs) {}
+DbElement::DbElement() {
+  m_type = DbElementType::NONE;
+  m_timestamp = c_invalidTs;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(const std::string &data)
-    : m_value(static_cast<std::string>(data)),
-      m_type(DbElementType::STRING),
-      m_timestamp(c_invalidTs) {}
+DbElement::DbElement(const std::string &data) {
+  m_value = static_cast<std::string>(data);
+  m_type = DbElementType::STRING;
+  m_timestamp = c_invalidTs;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(const std::string &data, timestamp ts)
-    : m_value(static_cast<std::string>(data)),
-      m_type(DbElementType::STRING),
-      m_timestamp(ts) {}
+DbElement::DbElement(const std::string &data, timestamp ts) {
+  m_value = static_cast<std::string>(data);
+  m_type = DbElementType::STRING;
+  m_timestamp = ts;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(uint32_t data)
-    : m_value(static_cast<uint32_t>(data)),
-      m_type(DbElementType::UINT32),
-      m_timestamp(c_invalidTs) {}
+DbElement::DbElement(uint32_t data) {
+  m_value = static_cast<uint32_t>(data);
+  m_type = DbElementType::UINT32;
+  m_timestamp = c_invalidTs;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(uint32_t data, timestamp ts)
-    : m_value(static_cast<uint32_t>(data)),
-      m_type(DbElementType::UINT32),
-      m_timestamp(ts) {}
-//--------------------------------------------------------------------------------------------
-DbElement::DbElement(int32_t data)
-    : m_value(static_cast<int32_t>(data)),
-      m_type(DbElementType::INT32),
-      m_timestamp(c_invalidTs) {}
+DbElement::DbElement(uint32_t data, timestamp ts) {
+  m_value = static_cast<uint32_t>(data);
+  m_type = DbElementType::UINT32;
+  m_timestamp = ts;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(int32_t data, timestamp ts)
-    : m_value(static_cast<int32_t>(data)),
-      m_type(DbElementType::INT32),
-      m_timestamp(ts) {}
+DbElement::DbElement(int32_t data) {
+  m_value = static_cast<int32_t>(data);
+  m_type = DbElementType::INT32;
+  m_timestamp = c_invalidTs;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(uint64_t data)
-    : m_value(static_cast<uint64_t>(data)),
-      m_type(DbElementType::UINT64),
-      m_timestamp(c_invalidTs) {}
+DbElement::DbElement(int32_t data, timestamp ts) {
+  m_value = static_cast<int32_t>(data);
+  m_type = DbElementType::INT32;
+  m_timestamp = ts;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(uint64_t data, timestamp ts)
-    : m_value(static_cast<uint64_t>(data)),
-      m_type(DbElementType::UINT64),
-      m_timestamp(ts) {}
+DbElement::DbElement(uint64_t data) {
+  m_value = static_cast<uint64_t>(data);
+  m_type = DbElementType::UINT64;
+  m_timestamp = c_invalidTs;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(int64_t data)
-    : m_value(static_cast<int64_t>(data)),
-      m_type(DbElementType::INT64),
-      m_timestamp(c_invalidTs) {}
+DbElement::DbElement(uint64_t data, timestamp ts) {
+  m_value = static_cast<uint64_t>(data);
+  m_type = DbElementType::UINT64;
+  m_timestamp = ts;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(int64_t data, timestamp ts)
-    : m_value(static_cast<int64_t>(data)),
-      m_type(DbElementType::INT64),
-      m_timestamp(ts) {}
+DbElement::DbElement(int64_t data) {
+  m_value = static_cast<int64_t>(data);
+  m_type = DbElementType::INT64;
+  m_timestamp = c_invalidTs;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(float data)
-    : m_value(static_cast<float>(data)),
-      m_type(DbElementType::FLOAT),
-      m_timestamp(c_invalidTs) {}
+DbElement::DbElement(int64_t data, timestamp ts) {
+  m_value = static_cast<int64_t>(data);
+  m_type = DbElementType::INT64;
+  m_timestamp = ts;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(float data, timestamp ts)
-    : m_value(static_cast<float>(data)),
-      m_type(DbElementType::FLOAT),
-      m_timestamp(ts) {}
+DbElement::DbElement(float data) {
+  m_value = static_cast<float>(data);
+  m_type = DbElementType::FLOAT;
+  m_timestamp = c_invalidTs;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(double data)
-    : m_value(static_cast<double>(data)),
-      m_type(DbElementType::DOUBLE),
-      m_timestamp(c_invalidTs) {}
+DbElement::DbElement(float data, timestamp ts) {
+  m_value = static_cast<float>(data);
+  m_type = DbElementType::FLOAT;
+  m_timestamp = ts;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(double data, timestamp ts)
-    : m_value(static_cast<double>(data)),
-      m_type(DbElementType::DOUBLE),
-      m_timestamp(ts) {}
+DbElement::DbElement(double data) {
+  m_value = static_cast<double>(data);
+  m_type = DbElementType::DOUBLE;
+  m_timestamp = c_invalidTs;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(bool data)
-    : m_value(static_cast<bool>(data)),
-      m_type(DbElementType::BOOL),
-      m_timestamp(c_invalidTs) {}
+DbElement::DbElement(double data, timestamp ts) {
+  m_value = static_cast<double>(data);
+  m_type = DbElementType::DOUBLE;
+  m_timestamp = ts;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(bool data, timestamp ts)
-    : m_value(static_cast<bool>(data)),
-      m_type(DbElementType::BOOL),
-      m_timestamp(ts) {}
+DbElement::DbElement(bool data) {
+  m_value = static_cast<bool>(data);
+  m_type = DbElementType::BOOL;
+  m_timestamp = c_invalidTs;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(const std::vector<uint8_t> &data)
-    : m_value(static_cast<std::vector<uint8_t>>(data)),
-      m_type(DbElementType::BYTES),
-      m_timestamp(c_invalidTs) {}
+DbElement::DbElement(bool data, timestamp ts) {
+  m_value = static_cast<bool>(data);
+  m_type = DbElementType::BOOL;
+  m_timestamp = ts;
+}
 
 //--------------------------------------------------------------------------------------------
-DbElement::DbElement(const std::vector<uint8_t> &data, timestamp ts)
-    : m_value(static_cast<std::vector<uint8_t>>(data)),
-      m_type(DbElementType::BYTES),
-      m_timestamp(ts) {}
+DbElement::DbElement(const std::vector<uint8_t> &data) {
+  m_value = static_cast<std::vector<uint8_t>>(data);
+  m_type = DbElementType::BYTES;
+  m_timestamp = c_invalidTs;
+}
 
+//--------------------------------------------------------------------------------------------
+DbElement::DbElement(const std::vector<uint8_t> &data, timestamp ts) {
+  m_value = static_cast<std::vector<uint8_t>>(data);
+  m_type = DbElementType::BYTES;
+  m_timestamp = ts;
+}
 //--------------------------------------------------------------------------------------------
 DbElement::~DbElement() {}
 
@@ -148,6 +168,9 @@ DbElement::timestamp DbElement::getTimestamp() const {
   if (m_timestamp == c_invalidTs) EMBDB_THROW("No timestamp");
   return m_timestamp;
 }
+
+//--------------------------------------------------------------------------------------------
+bool DbElement::hasTimestamp() const { return m_timestamp != c_invalidTs; }
 
 //--------------------------------------------------------------------------------------------
 std::string DbElement::toString() const {
@@ -309,7 +332,11 @@ bool DbElement::operator==(const DbElement &rhs) const {
       break;
   }
 
-  if (m_timestamp != rhs.getTimestamp()) return false;
+  if (rhs.hasTimestamp() && hasTimestamp())
+    if (m_timestamp != rhs.getTimestamp()) return false;
+
+  if (!rhs.hasTimestamp() && hasTimestamp()) return false;
+  if (rhs.hasTimestamp() && !hasTimestamp()) return false;
 
   return true;
 }

@@ -54,6 +54,7 @@ class DbElement {
 
   DbElementType getType() const;
   timestamp getTimestamp() const;
+  bool hasTimestamp() const;
 
   std::string toString() const;
   uint32_t toUint32() const;
