@@ -4,12 +4,15 @@ set(APP_SOURCES
   database/db-element/DbElement.cpp
   database/IDataBase.cpp
   database/db-layout/DbLayout.cpp
+  database/db-guard/DbGuard.cpp
   file-io/FileReader.cpp
   file-io/FileWriter.cpp
   utilities/IHasher.cpp
   utilities/ITimestamper.cpp
+  utilities/IMutex.cpp
   utilities/DefaultHasher.cpp
   utilities/DefaultTimestamper.cpp
+  utilities/DefaultMutex.cpp
   exception/Exception.cpp
   main.cpp
 )

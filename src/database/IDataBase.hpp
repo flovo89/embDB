@@ -18,10 +18,9 @@
 #ifndef _EMBDB_I_DATABASE_
 #define _EMBDB_I_DATABASE_
 
-#include <embdb-layout.pb.h>
-
 #include <list>
 
+#include "../../embdb-layout/cpp/embdb-layout.pb.h"
 #include "DbErrorCode.hpp"
 #include "db-element/DbElement.hpp"
 

@@ -16,12 +16,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include <sstream>
-
 #include "../../../src/database/db-element/DbElement.hpp"
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
+
 namespace embDB_database {
 namespace gtests {
 

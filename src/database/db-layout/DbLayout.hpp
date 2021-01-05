@@ -37,6 +37,8 @@ class DbLayout : public IDataBase {
            std::unique_ptr<embDB_utilities::ITimestamper> timestamper);
   virtual ~DbLayout();
 
+  friend class DbGuard;
+
  private:
   // IDataBase
   virtual DbErrorCode deserialize() override;
