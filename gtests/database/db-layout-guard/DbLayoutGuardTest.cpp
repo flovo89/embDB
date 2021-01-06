@@ -16,6 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include <unistd.h>
+
 #include <sstream>
 #include <vector>
 
@@ -86,6 +88,18 @@ TEST_F(DbLayoutGuardTest, getUnknownRowItems) {
   std::list<DbElement> elements;
   EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
   EXPECT_EQ(_guard->getAllItems("unknown", elements), DbErrorCode::NOTFOUND);
+}
+
+//--------------------------------------------------------------------------------------------
+TEST_F(DbLayoutGuardTest, getRowCount) {
+  uint32_t count;
+  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->createRow("rowname", DbElementType::STRING, 10),
+            DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->createRow("RowName", DbElementType::STRING, 10),
+            DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->getRowCount(count), DbErrorCode::SUCCESS);
+  EXPECT_EQ(count, 2);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -417,6 +431,40 @@ TEST_F(DbLayoutGuardTest, testBytes) {
   EXPECT_EQ(_guard->deleteRow(rowName), DbErrorCode::SUCCESS);
   EXPECT_EQ(_guard->rowExists(rowName, exists), DbErrorCode::SUCCESS);
   EXPECT_FALSE(exists);
+}
+
+//--------------------------------------------------------------------------------------------
+TEST_F(DbLayoutGuardTest, getItemsBetweenUint64) {
+  std::string rowName = "whatever";
+  std::list<DbElement> elements;
+  int64_t start = 0;
+  int64_t end = 0x7FFFFFFFFFFFFFFF;
+
+  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->createRow(rowName, DbElementType::UINT64, 100),
+            DbErrorCode::SUCCESS);
+
+  for (uint64_t i = 0; i < 100; i++) {
+    DbElement el(i);
+    EXPECT_EQ(_guard->addItem(rowName, el), DbErrorCode::SUCCESS);
+    ::usleep(2000);
+  }
+
+  EXPECT_EQ(_guard->getItemsBetween(rowName, start, end, elements),
+            DbErrorCode::SUCCESS);
+  EXPECT_EQ(elements.size(), 100);
+
+  int index = 0;
+  for (auto& e : elements) {
+    if (index == 40)
+      start = e.getTimestamp();
+    else if (index == 59)
+      end = e.getTimestamp();
+    index++;
+  }
+  EXPECT_EQ(_guard->getItemsBetween(rowName, start, end, elements),
+            DbErrorCode::SUCCESS);
+  EXPECT_EQ(elements.size(), 20);
 }
 
 }  // namespace gtests
