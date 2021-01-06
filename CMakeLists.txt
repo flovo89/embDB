@@ -33,6 +33,8 @@ configure_file (
 # Externals librarires
 find_package(PkgConfig REQUIRED)
 pkg_search_module(PROTO_BUF protobuf>=3.14.0)
+pkg_search_module(LOG4CPLUS log4cplus>=1.2.0)
+pkg_search_module(LIBEVENT REQUIRED libevent>=2.0)
 
 # Compile the app
 add_subdirectory(src)
