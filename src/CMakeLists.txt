@@ -35,6 +35,10 @@ set(APP_SOURCES
   logging/null/LoggerNull.cpp
   process/IDaemonizer.cpp
   process/posix/DaemonizerPosix.cpp
+  socket/ISocketServer.cpp
+  socket/ISocketClient.cpp
+  socket/posix/SocketClient.cpp
+  socket/posix/SocketServer.cpp
   main.cpp
 )
 
