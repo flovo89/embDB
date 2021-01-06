@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _EMBDB_SOCKET_TYPE_
-#define _EMBDB_SOCKET_TYPE_
+#ifndef _EMBDB_SOCKET_SOCKET_TYPE_
+#define _EMBDB_SOCKET_SOCKET_TYPE_
 
 namespace embDB_socket {
 

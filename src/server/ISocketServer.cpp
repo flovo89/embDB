@@ -15,24 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include "ISocketServer.hpp"
 
-#ifndef _EMBDB_SOCKET_I_SOCKET_CLIENT_HPP_
-#define _EMBDB_SOCKET_I_SOCKET_CLIENT_HPP_
+namespace embDB_server {
 
-#include "../eventloop/IHandledIo.hpp"
+//--------------------------------------------------------------------------------------------
+ISocketServer::ISocketServer() {}
 
-namespace embDB_socket {
+//--------------------------------------------------------------------------------------------
+ISocketServer::~ISocketServer() {}
 
-class ISocketClient {
- public:
-  ISocketClient();
-  virtual ~ISocketClient();
-
-  virtual void disconnect() = 0;
-  virtual int read(unsigned char* buffer, unsigned int buffSize) = 0;
-  virtual int write(const unsigned char* buffer, unsigned int buffSize) = 0;
-  virtual embDB_eventloop::IoHandle getIoHandle() = 0;
-};
-
-}  // namespace embDB_socket
-#endif
+}  // namespace embDB_server

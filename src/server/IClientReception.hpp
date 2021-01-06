@@ -16,23 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _EMBDB_SOCKET_I_SOCKET_CLIENT_HPP_
-#define _EMBDB_SOCKET_I_SOCKET_CLIENT_HPP_
+#ifndef _EMBDB_SERVER_I_CLIENT_RECEPTION_HPP_
+#define _EMBDB_SERVER_I_CLIENT_RECEPTION_HPP_
 
-#include "../eventloop/IHandledIo.hpp"
+#include <string>
 
-namespace embDB_socket {
+#include "ISocketClient.hpp"
 
-class ISocketClient {
+namespace embDB_server {
+
+class IClientReception {
  public:
-  ISocketClient();
-  virtual ~ISocketClient();
+  IClientReception();
+  virtual ~IClientReception();
 
-  virtual void disconnect() = 0;
-  virtual int read(unsigned char* buffer, unsigned int buffSize) = 0;
-  virtual int write(const unsigned char* buffer, unsigned int buffSize) = 0;
-  virtual embDB_eventloop::IoHandle getIoHandle() = 0;
+  virtual void notifier(ISocketClient& client) = 0;
 };
 
-}  // namespace embDB_socket
+}  // namespace embDB_server
 #endif

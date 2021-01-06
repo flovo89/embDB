@@ -39,6 +39,13 @@ set(APP_SOURCES
   socket/ISocketClient.cpp
   socket/posix/SocketClient.cpp
   socket/posix/SocketServer.cpp
+  server/ISocketServer.cpp
+  server/ISocketClient.cpp
+  server/buffer/ClientBuffer.cpp
+  server/sockets/ISocketClientFactory.cpp
+  server/sockets/SocketClientFactory.cpp
+  server/sockets/SocketClient.cpp
+  server/sockets/SocketServer.cpp
   main.cpp
 )
 

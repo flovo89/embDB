@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _EMBDB_SOCKET_CLIENT_POSIX_HPP_
-#define _EMBDB_SOCKET_CLIENT_POSIX_HPP_
+#ifndef _EMBDB_SOCKET_SOCKET_CLIENT_POSIX_HPP_
+#define _EMBDB_SOCKET_SOCKET_CLIENT_POSIX_HPP_
 
 #include <sys/un.h>
 

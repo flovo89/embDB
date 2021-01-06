@@ -16,8 +16,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _EMBDB_SOCKET_SERVER_UNIX_HPP_
-#define _EMBDB_SOCKET_SERVER_UNIX_HPP_
+#ifndef _EMBDB_SOCKET_SOCKET_SERVER_UNIX_HPP_
+#define _EMBDB_SOCKET_SOCKET_SERVER_UNIX_HPP_
 
 #include <sys/un.h>
 
