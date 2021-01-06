@@ -16,35 +16,22 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "LoggerFactory.hpp"
+#include "EventLoopBreakerOnSignal.hpp"
 
-#include <unistd.h>
+#include "../logging/Loggers.hpp"
 
-#include "LoggerConfig.hpp"
-
-#if EMBDB_HAS_LOG4CPLUS == 1
-#include "log4cplus/LoggerLog4Cplus.hpp"
-#else
-#include "console/LoggerConsole.hpp"
-#include "null/LoggerNull.hpp"
-#endif
-
-namespace embDB_logging {
+namespace embDB_eventloop {
 
 //--------------------------------------------------------------------------------------------
-int LoggerFactory::createDefaultLogger(std::unique_ptr<ILogger>& logger,
-                                       const std::string& config) {
-#if EMBDB_HAS_LOG4CPLUS == 1
-  logger.reset(new LoggerLog4Cplus(config));
-#else
-  // Use console logger if configuration file is found
-  if (access(config.c_str(), F_OK))
-    logger.reset(new LoggerNull());
-  else
-    logger.reset(new LoggerConsole());
-#endif
+EventLoopBreakerOnSignal::EventLoopBreakerOnSignal(IEventLoop& el) : m_el(el) {}
 
-  return 0;
+//--------------------------------------------------------------------------------------------
+EventLoopBreakerOnSignal::~EventLoopBreakerOnSignal() {}
+
+//--------------------------------------------------------------------------------------------
+void EventLoopBreakerOnSignal::signalRaised(SignalHandle s) {
+  LOG_IN() << "Got signal " << s << " breaking loop ...";
+  m_el.breakLoop();
 }
 
-}  // namespace embDB_logging
+}  // namespace embDB_eventloop

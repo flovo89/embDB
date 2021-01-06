@@ -16,23 +16,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "EventLoopFactory.hpp"
+#ifndef _EMBDB_LOGGER_CONFIG_HPP_
+#define _EMBDB_LOGGER_CONFIG_HPP_
 
-#include "../logging/Loggers.hpp"
-#include "libevent/EventLoopLibevent.hpp"
+#define EMBDB_HAS_LOG4CPLUS @LOG4CPLUS_FOUND@
 
-namespace embDB_eventloop {
-
-//--------------------------------------------------------------------------------------------
-int EventLoopFactory::createDefaultEventLoop(std::unique_ptr<IEventLoop>& el) {
-  return createlibeventEventLoop(el);
-}
-
-//--------------------------------------------------------------------------------------------
-int EventLoopFactory::createlibeventEventLoop(std::unique_ptr<IEventLoop>& el) {
-  LOG_DB() << "Creating libevent event loop";
-  el.reset(new EventLoopLibevent());
-  return 0;
-}
-
-}  // namespace embDB_eventloop
+#endif

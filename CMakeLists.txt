@@ -32,9 +32,18 @@ configure_file (
 
 # Externals librarires
 find_package(PkgConfig REQUIRED)
-pkg_search_module(PROTO_BUF protobuf>=3.14.0)
-pkg_search_module(LOG4CPLUS log4cplus>=1.2.0)
+pkg_search_module(PROTO_BUF REQUIRED protobuf>=3.14.0)
 pkg_search_module(LIBEVENT REQUIRED libevent>=2.0)
+
+# log4cplus supoprt
+pkg_search_module(LOG4CPLUS log4cplus>=1.2.0)
+if(LOG4CPLUS_FOUND)
+  message(STATUS "Using log4cplus version ${LOG4CPLUS_VERSION}")
+  set(PKG_CONFIG_PRIVATE_LIBS "${PKG_CONFIG_PRIVATE_LIBS} -l${LOG4CPLUS_LIBRARIES}")
+else(LOG4CPLUS_FOUND)
+  message(STATUS "log4cplus support is disabled")
+  set(LOG4CPLUS_FOUND 0)
+endif(LOG4CPLUS_FOUND)
 
 # Compile the app
 add_subdirectory(src)

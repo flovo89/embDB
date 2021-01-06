@@ -16,23 +16,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "EventLoopFactory.hpp"
+#ifndef _EMBDB_EVENT_LOOP_BREAKER_ON_SIGNAL_HPP_
+#define _EMBDB_EVENT_LOOP_BREAKER_ON_SIGNAL_HPP_
 
-#include "../logging/Loggers.hpp"
-#include "libevent/EventLoopLibevent.hpp"
+#include "IEventLoop.hpp"
 
 namespace embDB_eventloop {
 
-//--------------------------------------------------------------------------------------------
-int EventLoopFactory::createDefaultEventLoop(std::unique_ptr<IEventLoop>& el) {
-  return createlibeventEventLoop(el);
-}
+class EventLoopBreakerOnSignal : public IHandledSignal {
+ public:
+  EventLoopBreakerOnSignal(IEventLoop& el);
+  virtual ~EventLoopBreakerOnSignal();
 
-//--------------------------------------------------------------------------------------------
-int EventLoopFactory::createlibeventEventLoop(std::unique_ptr<IEventLoop>& el) {
-  LOG_DB() << "Creating libevent event loop";
-  el.reset(new EventLoopLibevent());
-  return 0;
-}
+  // IHandledSignal
+  virtual void signalRaised(SignalHandle s) override;
+
+ private:
+  IEventLoop& m_el;
+};
 
 }  // namespace embDB_eventloop
+#endif
