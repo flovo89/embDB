@@ -33,6 +33,8 @@ set(APP_SOURCES
   logging/Loggers.cpp
   logging/console/LoggerConsole.cpp
   logging/null/LoggerNull.cpp
+  process/IDaemonizer.cpp
+  process/posix/DaemonizerPosix.cpp
   main.cpp
 )
 
