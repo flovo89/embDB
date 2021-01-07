@@ -16,22 +16,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "DefaultHasher.hpp"
+#ifndef _EMBDB_I_PROTOCOL_HPP_
+#define _EMBDB_I_PROTOCOL_HPP_
 
-#include <functional>
+#include <sstream>
+#include <string>
 
-namespace embDB_utilities {
+#include "../server/buffer/ClientBuffer.hpp"
+#include "DataObject.hpp"
+#include "ProtErrorCode.hpp"
 
-//--------------------------------------------------------------------------------------------
-DefaultHasher::DefaultHasher() {}
+namespace embDB_protocol {
 
-//--------------------------------------------------------------------------------------------
-DefaultHasher::~DefaultHasher() {}
+class IProtocol {
+ public:
+  IProtocol();
+  virtual ~IProtocol();
 
-//--------------------------------------------------------------------------------------------
-uint64_t DefaultHasher::hashStringToUint64(std::string& data) {
-  std::hash<std::string> hasher;
-  return hasher(data);
-}
+  virtual bool matchsInput(embDB_server::ClientBuffer& buffer) = 0;
+  virtual bool addData(embDB_server::ClientBuffer& buffer) = 0;
 
-}  // namespace embDB_utilities
+  virtual ProtErrorCode translateToDataObject(
+      std::unique_ptr<DataObject>& dataobject) = 0;
+  virtual void translateToString(const std::unique_ptr<DataObject>& dataobject,
+                                 std::string& data) = 0;
+};
+
+}  // namespace embDB_protocol
+#endif

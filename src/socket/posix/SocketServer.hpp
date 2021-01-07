@@ -52,4 +52,4 @@ class SocketServer : public ISocketServer {
 };
 
 }  // namespace embDB_socket
-#endif  // _COMET_LIB_I_SOCKET_HPP_
+#endif

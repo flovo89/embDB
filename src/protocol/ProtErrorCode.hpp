@@ -15,20 +15,26 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _EMBDB_DB_ERROR_CODE_HPP_
-#define _EMBDB_DB_ERROR_CODE_HPP_
+
+#ifndef _EMBDB_ERROR_CODES_HPP_
+#define _EMBDB_ERROR_CODES_HPP_
 
 #include "../errorcode/ErrorCode.hpp"
 
-namespace embDB_database {
+namespace embDB_protocol {
 
-enum DbErrorCode {
+enum ProtErrorCode {
   SUCCESS = 0,
-  NOTFOUND = embDB_errorcode::ErrorCodeDefiner::START_DB_ERROR,
-  INTERNAL,
-  HASHNAMEMISMATCH,
-  ITEMSCOUNTMISMATCH,
-  TYPEMISMATCH,
+  NO_COMMAND = embDB_errorcode::ErrorCodeDefiner::START_PROT_ERROR,
+  UNKNOWN_COMMAND,
+  NO_NAME,
+  NO_TYPE,
+  UNKNOWN_TYPE,
+  NO_STARTTIME,
+  NO_ENDTIME,
+  NO_ITEMSCOUNT,
+  NO_DATA,
+  INVALID_DATA,
 };
 
 }

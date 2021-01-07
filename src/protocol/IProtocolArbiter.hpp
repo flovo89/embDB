@@ -15,22 +15,25 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _EMBDB_DB_ERROR_CODE_HPP_
-#define _EMBDB_DB_ERROR_CODE_HPP_
 
-#include "../errorcode/ErrorCode.hpp"
+#ifndef _EMBDB_I_PROTOCOL_ARBITER_HPP_
+#define _EMBDB_I_PROTOCOL_ARBITER_HPP_
 
-namespace embDB_database {
+#include <string>
 
-enum DbErrorCode {
-  SUCCESS = 0,
-  NOTFOUND = embDB_errorcode::ErrorCodeDefiner::START_DB_ERROR,
-  INTERNAL,
-  HASHNAMEMISMATCH,
-  ITEMSCOUNTMISMATCH,
-  TYPEMISMATCH,
+#include "../server/buffer/ClientBuffer.hpp"
+#include "IProtocol.hpp"
+
+namespace embDB_protocol {
+
+class IProtocolArbiter {
+ public:
+  IProtocolArbiter();
+  virtual ~IProtocolArbiter();
+
+  virtual bool getProtocol(embDB_server::ClientBuffer& buffer,
+                           IProtocol*& protocol) = 0;
 };
 
-}
-
+}  // namespace embDB_protocol
 #endif

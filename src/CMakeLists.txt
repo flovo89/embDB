@@ -46,6 +46,9 @@ set(APP_SOURCES
   server/sockets/SocketClientFactory.cpp
   server/sockets/SocketClient.cpp
   server/sockets/SocketServer.cpp
+  protocol/IProtocol.cpp
+  protocol/IProtocolArbiter.cpp
+  protocol/DataObject.cpp
   main.cpp
 )
 
@@ -61,7 +64,7 @@ add_custom_command(
 set(LINK_LIBRARIES
   ${APP_LIB_NAME}
   ${PROTO_BUF_LIBRARIES}
-  ${LIBEVENT_LIBRARIES}
+  ${Libevent_LIBRARIES}
 )
 
 # Log4cplus
@@ -86,7 +89,7 @@ endif(LOG4CPLUS_FOUND)
 include_directories(
   ${EMBDB_LAYOUT_DIR}/cpp
   ${PROTO_BUF_INCLUDE_DIRS}
-  ${LIBEVENT_INCLUDE_DIRS}
+  ${Libevent_INCLUDE_DIRS}
 )
 
 add_library(${APP_LIB_NAME} ${APP_SOURCES})
