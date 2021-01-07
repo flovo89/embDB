@@ -1,6 +1,8 @@
 # embDB
 Simple Time Series Database 
 
+Due to its simplicity the main focus is on embedded linux devices. But it is not exclusively developed for embedded devices. The database scales perfectly and can be used on full-blown linux distros as well.
+
 # Facts
 
 ## Database structure
