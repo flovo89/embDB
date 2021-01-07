@@ -1,5 +1,5 @@
 # embDB
-Simple Time Series Database
+Simple Time Series Database 
 
 # Facts
 
@@ -17,6 +17,24 @@ Supported datatypes are:
 
 ## Timestamps
 Each entry in the database has its timestamp which has millisecond resolution since epoch and is packet in an signed long
+
+## Database structure
+The database will have the following structure
+
+| Hash X | Ringbuffer info | Type | Item A | Item B | ... | Item N |
+|--------|-----------------|------|--------|--------|-----|--------|
+|    :   |         :       |   :  |     :   |     :   |  :  |    :    |
+| Hash Z | Ringbuffer info | Type | Item a | Item b | ... | Item n |
+
+**Hash**: Built from the name-string
+
+**Ringbuffer info**: Index, maxItems, overflow, curItem. 
+
+**Type**: Datatype of items in row
+
+**Item x**: One item, containing timestamp & value
+
+**Each row has its own itemscount and overflows automatically if mor than itemscount items are added.**
 
 ## Limitations
 The entire database is stored using a protobuf serialization. When the embDB service is running, the entire database is kept in RAM. When the service is stopped, the latest version from RAM is serialized and stored to the persistent location. Therefore a proper stop of the service is necessary. Proper in this case means by SIGTERM or SIGINT.
