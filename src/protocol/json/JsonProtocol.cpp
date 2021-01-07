@@ -69,8 +69,14 @@ ProtErrorCode JsonProtocol::translateToDataObject(
     switch (com) {
       case ProtocolCommand::DELETE_ROW:
       case ProtocolCommand::CHECK_ROW_EXISTS:
-      case ProtocolCommand::READ_ROW:
+      case ProtocolCommand::READ_ROW: {
+        if (!checkFieldExists(jsonobj, c_type)) return ProtErrorCode::NO_TYPE;
+        embDB_database::DbElementType type;
+        if (parseStringToDbElType(jsonobj[c_type], type))
+          return ProtErrorCode::UNKNOWN_TYPE;
+        dataobject->setDbElementType(type);
         break;
+      }
       case ProtocolCommand::READ_ROW_TIMESTAMPED: {
         if (!checkFieldExists(jsonobj, c_starttime))
           return ProtErrorCode::NO_STARTTIME;
@@ -78,6 +84,11 @@ ProtErrorCode JsonProtocol::translateToDataObject(
         if (!checkFieldExists(jsonobj, c_endtime))
           return ProtErrorCode::NO_ENDTIME;
         dataobject->setEndTime(jsonobj[c_endtime]);
+        if (!checkFieldExists(jsonobj, c_type)) return ProtErrorCode::NO_TYPE;
+        embDB_database::DbElementType type;
+        if (parseStringToDbElType(jsonobj[c_type], type))
+          return ProtErrorCode::UNKNOWN_TYPE;
+        dataobject->setDbElementType(type);
         break;
       }
       case ProtocolCommand::CREATE_ROW: {
@@ -189,6 +200,11 @@ void JsonProtocol::translateToString(
   j[c_command] = command;
   j[c_error] = dataobject->getErrorCode();
 
+  if (dataobject->getErrorCode() != embDB_errorcode::ERROR_SUCCESS) {
+    data = j.dump();
+    return;
+  }
+
   if (dataobject->getCommand() == GET_ROW_COUNT) {
     j[c_rowcount] = dataobject->getRowCount();
   } else if (dataobject->getCommand() != CLEAR_ALL) {
@@ -203,12 +219,12 @@ void JsonProtocol::translateToString(
         j[c_endtime] = dataobject->getEndTime();
       }
       auto arr = json::array();
-      embDB_database::DbElementType type;
+      bool typemismatch = false;
+      embDB_database::DbElementType type = dataobject->getDbElementType();
       for (auto& el : dataobject->getDbElements()) {
-        type = el.getType();
         json js;
         js[c_timestamp] = el.getTimestamp();
-        switch (type) {
+        switch (el.getType()) {
           case embDB_database::DbElementType::STRING:
             js[c_value] = el.toString();
             break;
@@ -241,10 +257,17 @@ void JsonProtocol::translateToString(
             break;
         }
         arr.push_back(js);
+
+        // Compare actual type and requested type
+        if (el.getType() != type) {
+          type = el.getType();
+          typemismatch = true;
+        }
       }
       std::string strtype;
       if (parseDbElTypeToString(type, strtype))
         EMBDB_THROW("Internal error when parsing datatype to string");
+      if (typemismatch) j[c_error] = embDB_database::DbErrorCode::TYPEMISMATCH;
       j[c_type] = strtype;
       j[c_dataarray] = arr;
     } else if ((dataobject->getCommand() != CREATE_ROW) &&
