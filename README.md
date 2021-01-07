@@ -3,20 +3,8 @@ Simple Time Series Database
 
 # Facts
 
-## Datatypes
-Supported datatypes are:
-- string
-- unsigned integer
-- signed integer
-- unsinged long
-- signed long
-- float
-- double
-- bool
-- bytes vector
-
 ## Database structure
-The database will have the following structure
+The database has the following structure
 
 | Hash X | Ringbuffer info | Type | Item A | Item B | ... | Item N |
 |--------|-----------------|------|--------|--------|-----|--------|
@@ -32,6 +20,18 @@ The database will have the following structure
 **Item x**: One item, containing timestamp & value
 
 **Each row has its own itemscount and overflows automatically if more than itemscount items are added.**
+
+## Datatypes
+Supported datatypes are:
+- string
+- unsigned integer
+- signed integer
+- unsinged long
+- signed long
+- float
+- double
+- bool
+- bytes vector
 
 ## Timestamps
 Each entry in the database has its timestamp which has millisecond resolution since epoch and is packed in an signed long
