@@ -16,23 +16,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _EMBDB_I_PROTOCOL_ARBITER_HPP_
-#define _EMBDB_I_PROTOCOL_ARBITER_HPP_
+#ifndef _EMBDB_PROTOCOL_PROCESSOR_HPP_
+#define _EMBDB_PROTOCOL_PROCESSOR_HPP_
 
-#include <string>
+#include <memory>
+#include <sstream>
 
-#include "../server/buffer/ClientBuffer.hpp"
-#include "IProtocol.hpp"
+#include "../database/db-guard/DbGuard.hpp"
+#include "../server/IClientReception.hpp"
+#include "IProtocolArbiter.hpp"
 
 namespace embDB_protocol {
 
-class IProtocolArbiter {
+class ProtocolProcessor : public embDB_server::IClientReception {
  public:
-  IProtocolArbiter();
-  virtual ~IProtocolArbiter();
+  ProtocolProcessor(std::unique_ptr<IProtocolArbiter> arbiter,
+                    embDB_database::DbGuard& guard);
+  virtual ~ProtocolProcessor();
 
-  virtual bool getProtocol(embDB_server::ClientBuffer& buffer,
-                           std::shared_ptr<IProtocol>& protocol) = 0;
+  // embDB_server::IClientReception
+  virtual void notifier(embDB_server::ISocketClient& client) override;
+
+ private:
+  std::unique_ptr<IProtocolArbiter> m_arbiter;
+  embDB_database::DbGuard& m_guard;
+
+  void processData(DataObject& obj);
 };
 
 }  // namespace embDB_protocol

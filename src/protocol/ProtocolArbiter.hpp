@@ -16,31 +16,29 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#ifndef _EMBDB_CLIENT_BUFFER_HPP_
-#define _EMBDB_CLIENT_BUFFER_HPP_
+#ifndef _EMBDB_PROTOCOL_ARBITER_HPP_
+#define _EMBDB_PROTOCOL_ARBITER_HPP_
 
-#include <string>
+#include <list>
+#include <memory>
+#include <sstream>
 
-namespace embDB_server {
+#include "IProtocolArbiter.hpp"
 
-#define BUFFERSIZE 1024
+namespace embDB_protocol {
 
-class ClientBuffer {
+class ProtocolArbiter : public IProtocolArbiter {
  public:
-  ClientBuffer();
-  virtual ~ClientBuffer();
+  ProtocolArbiter(std::list<std::shared_ptr<IProtocol>>& protocols);
+  virtual ~ProtocolArbiter();
 
-  bool popFromTo(char from, char to, std::string& str);
-  bool peekFromTo(char from, char to, std::string& str);
-
-  ClientBuffer& operator<<(const std::string& str);
+  // IProtocolArbiter
+  virtual bool getProtocol(embDB_server::ClientBuffer& buffer,
+                           std::shared_ptr<IProtocol>& protocol) override;
 
  private:
-  char m_buffer[BUFFERSIZE];
-  int m_readPointer;
-  int m_writePointer;
-
-  bool fromTo(bool alter, char from, char to, std::string& str);
+  std::list<std::shared_ptr<IProtocol>>& m_protocols;
 };
-}  // namespace embDB_server
+
+}  // namespace embDB_protocol
 #endif

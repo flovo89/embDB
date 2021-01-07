@@ -49,6 +49,8 @@ set(APP_SOURCES
   protocol/IProtocol.cpp
   protocol/IProtocolArbiter.cpp
   protocol/DataObject.cpp
+  protocol/ProtocolProcessor.cpp
+  protocol/json/JsonProtocol.cpp
   main.cpp
 )
 

@@ -103,4 +103,15 @@ void DataObject::setDbElement(const embDB_database::DbElement& element) {
 //--------------------------------------------------------------------------------------------
 embDB_database::DbElement& DataObject::getDbElement() { return m_element; }
 
+//--------------------------------------------------------------------------------------------
+void DataObject::setDbElements(
+    const std::list<embDB_database::DbElement>& elements) {
+  m_elements = elements;
+}
+
+//--------------------------------------------------------------------------------------------
+std::list<embDB_database::DbElement>& DataObject::getDbElements() {
+  return m_elements;
+}
+
 }  // namespace embDB_protocol

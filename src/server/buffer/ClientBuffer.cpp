@@ -27,23 +27,13 @@ ClientBuffer::ClientBuffer() : m_readPointer(0), m_writePointer(0) {}
 ClientBuffer::~ClientBuffer() {}
 
 //--------------------------------------------------------------------------------------------
-bool ClientBuffer::getFromTo(char from, char to, std::string& str) {
-  bool startFound = false;
-  int tempRead = m_readPointer;
-  str = "";
-  while (tempRead != m_writePointer) {
-    if (m_buffer[tempRead] == from) startFound = true;
-    if (startFound) {
-      str.push_back(m_buffer[tempRead]);
-      if (m_buffer[tempRead] == to) {
-        m_readPointer = tempRead;
-        return true;
-      }
-    }
-    tempRead++;
-    if (tempRead == BUFFERSIZE) tempRead = 0;
-  }
-  return false;
+bool ClientBuffer::popFromTo(char from, char to, std::string& str) {
+  return fromTo(true, from, to, str);
+}
+
+//--------------------------------------------------------------------------------------------
+bool ClientBuffer::peekFromTo(char from, char to, std::string& str) {
+  return fromTo(false, from, to, str);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -53,6 +43,26 @@ ClientBuffer& ClientBuffer::operator<<(const std::string& str) {
     if (m_writePointer == BUFFERSIZE) m_writePointer = 0;
   }
   return *this;
+}
+
+//--------------------------------------------------------------------------------------------
+bool ClientBuffer::fromTo(bool alter, char from, char to, std::string& str) {
+  bool startFound = false;
+  int tempRead = m_readPointer;
+  str = "";
+  while (tempRead != m_writePointer) {
+    if (m_buffer[tempRead] == from) startFound = true;
+    if (startFound) {
+      str.push_back(m_buffer[tempRead]);
+      if (m_buffer[tempRead] == to) {
+        if (alter) m_readPointer = tempRead;
+        return true;
+      }
+    }
+    tempRead++;
+    if (tempRead == BUFFERSIZE) tempRead = 0;
+  }
+  return false;
 }
 
 }  // namespace embDB_server

@@ -22,6 +22,7 @@
 #include <sstream>
 #include <string>
 
+#include "../errorcode/ErrorCode.hpp"
 #include "../server/buffer/ClientBuffer.hpp"
 #include "DataObject.hpp"
 #include "ProtErrorCode.hpp"
@@ -33,13 +34,15 @@ class IProtocol {
   IProtocol();
   virtual ~IProtocol();
 
-  virtual bool matchsInput(embDB_server::ClientBuffer& buffer) = 0;
-  virtual bool addData(embDB_server::ClientBuffer& buffer) = 0;
+  virtual bool validateInput(embDB_server::ClientBuffer& buffer) = 0;
+  virtual void addInput(embDB_server::ClientBuffer& buffer) = 0;
 
   virtual ProtErrorCode translateToDataObject(
       std::unique_ptr<DataObject>& dataobject) = 0;
   virtual void translateToString(const std::unique_ptr<DataObject>& dataobject,
                                  std::string& data) = 0;
+  virtual void buildError(embDB_errorcode::ErrorCode error,
+                          std::string& data) = 0;
 };
 
 }  // namespace embDB_protocol

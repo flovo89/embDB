@@ -55,6 +55,8 @@ class DataObject {
   embDB_database::DbElementType getDbElementType();
   void setDbElement(const embDB_database::DbElement& element);
   embDB_database::DbElement& getDbElement();
+  void setDbElements(const std::list<embDB_database::DbElement>& elements);
+  std::list<embDB_database::DbElement>& getDbElements();
 
  private:
   ProtocolCommand m_command;
@@ -67,6 +69,7 @@ class DataObject {
   bool m_rowExists;
   embDB_database::DbElementType m_dbElementType;
   embDB_database::DbElement m_element;
+  std::list<embDB_database::DbElement> m_elements;
 };
 
 }  // namespace embDB_protocol
