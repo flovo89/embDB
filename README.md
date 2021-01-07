@@ -15,9 +15,6 @@ Supported datatypes are:
 - bool
 - bytes vector
 
-## Timestamps
-Each entry in the database has its timestamp which has millisecond resolution since epoch and is packet in an signed long
-
 ## Database structure
 The database will have the following structure
 
@@ -34,10 +31,13 @@ The database will have the following structure
 
 **Item x**: One item, containing timestamp & value
 
-**Each row has its own itemscount and overflows automatically if mor than itemscount items are added.**
+**Each row has its own itemscount and overflows automatically if more than itemscount items are added.**
+
+## Timestamps
+Each entry in the database has its timestamp which has millisecond resolution since epoch and is packed in an signed long
 
 ## Limitations
-The entire database is stored using a protobuf serialization. When the embDB service is running, the entire database is kept in RAM. When the service is stopped, the latest version from RAM is serialized and stored to the persistent location. Therefore a proper stop of the service is necessary. Proper in this case means by SIGTERM or SIGINT.
+The entire database is stored using a protobuf serialization. When the embDB service is running, the entire database is kept in RAM. When the service is stopped, the latest db version from RAM is serialized and stored to the persistent location. Therefore a proper stop of the service is necessary. Proper in this case means by SIGTERM or SIGINT.
 
 # Interface
 
@@ -58,7 +58,7 @@ embdb:
 ```
 
 ## Protocol
-Currently only a JSON protocol is implemented. Other protocols can be implemented on request.
+Currently only a JSON protocol is implemented. Other protocols can be added using the implemented interfaces.
 ### JSON
 #### CreateRow
 Creates a new row in the database. A row with an unique name must be created to add items to it. The "itemsCount" field defines how many items are stored in this row. If as in the example below 1000 items are stored and the 1001 is added, the first added will be overwritten (ringbuffer like).
