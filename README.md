@@ -16,12 +16,15 @@ Supported datatypes are:
 - bytes vector
 
 ## Timestamps
-Each entry in the database has its timestamp which has millisecond resulution and is packet in an signed long
+Each entry in the database has its timestamp which has millisecond resolution since epoch and is packet in an signed long
+
+## Limitations
+The entire database is stored using a protobuf serialization. When the embDB service is running, the entire database is kept in RAM. When the service is stopped, the latest version from RAM is serialized and stored to the persistent location. Therefore a proper stop of the service is necessary. Proper in this case means by SIGTERM or SIGINT.
 
 # Interface
 
 ## Access
-The database can be accessed by multible clients over a Unix-Domain-Socket or a TCP-Socket. More infos are given in the help of the embDB service when calling 
+The database can be accessed by multible clients over a Unix-Domain-Socket or a TCP-Socket. More infos how to set the path or port are given in the help of the embDB service when calling 
 ```BASH
 root@machine embdb -h
 embdb:
@@ -40,88 +43,94 @@ embdb:
 Currently only a JSON protocol is implemented. Other protocols can be implemented on request.
 ### JSON
 #### CreateRow
-Request:
+Creates a new row in the database. A row with an unique name must be created to add items to it. The "itemsCount" field defines how many items are stored in this row. If as in the example below 1000 items are stored and the 1001 is added, the first added will be overwritten (ringbuffer like).
+#### Request:
 ```JSON
 { 
     "command": "createRow", 
     "name": "yourRowName", 
     "type": "yourRowType", 
-    "itemsCount": maxItemsInRow 
+    "itemsCount": 1000 
 }
 ```
-Result:
+#### Result:
 ```JSON
 { 
     "command": "createRow", 
     "name": "yourRowName", 
-    "error": errorcode
+    "error": 0
 }
 ```
 
 ### ClearAll
-Request:
+Clears all rows with their items.
+#### Request:
 ```JSON
 { 
     "command": "clearAll" 
 }
 ```
-Result:
+#### Result:
 ```JSON
 { 
     "command": "clearAll", 
-    "error": errorcode
+    "error": 0
 }
 ```
 ### DeleteRow
-Request:
+Deletes the row with the specified name.
+#### Request:
 ```JSON
 { 
     "command": "deleteRow", 
     "name": "yourRowName" 
 }
 ```
-Result:
+#### Result:
 ```JSON
 { 
     "command": "deleteRow", 
     "name": "yourRowName", 
-    "error": errorcode 
+    "error": 0 
 }
 ```
 ### RowExists
-Request:
+Returns info if the row exists.
+##### Request:
 ```JSON
 { 
     "command": "rowExists", 
     "name": "yourRowName" 
 }
 ```
-Result:
+#### Result:
 ```JSON
 { 
     "command": "rowExists", 
     "name": "yourRowName", 
-    "error": errorcode, 
-    "rowExists": bool 
+    "error": 0, 
+    "rowExists": true 
     }
 ```
 ### RowCount
-Request:
+Number of all rows in database.
+#### Request:
 ```JSON
 { 
     "command": "rowCount" 
 }
 ```
-Result:
+#### Result:
 ```JSON
 { 
     "command": "rowCount", 
-    "error": errorcode, 
-    "rowCount": count 
+    "error": 0, 
+    "rowCount": 2 
 }
 ```
 ### ReadRow
-Request:
+Read all items in a row. 
+#### Request:
 ```JSON
 { 
     "command": "readRow", 
@@ -129,79 +138,106 @@ Request:
     "type": "yourRowType" 
 }
 ```
-Result:
+#### Result:
 ```JSON
 { 
     "command": "readRow", 
-    "error": errorcode, 
-    "rowCount": count, 
+    "error": 0, 
     "type": "yourRowType", 
-    "values": [{"value": v, "timestamp":ts},{},...] 
+    "values": [{"value": 89, "timestamp": 1234567891},{}] 
 }
 ```
 ### ReadRowTimestamped
-Request:
+Returns all items between the given start & end time.
+#### Request:
 ```JSON
 { 
     "command": "readRowTimestamped", 
     "name": "yourRowName", 
     "type": "yourRowType", 
-    "startTime": ms_start, 
-    "endTime": ms_end 
+    "startTime": 1234567890, 
+    "endTime": 1234567899 
 }
 ```
-Result:
+#### Result:
 ```JSON
 { 
     "command": "readRowTimestamped", 
-    "error": errorcode, 
-    "rowCount": count, 
-    "startTime": ms_start, 
-    "endTime": ms_end, 
+    "error": 0, 
+    "rowCount": 10, 
+    "startTime": 1234567890, 
+    "endTime": 1234567899, 
     "type": "yourRowType", 
-    "values": [{"value": v, "timestamp":ts},{},...] 
+    "values": [{"value": 1, "timestamp":1234567897},{}] 
 }
 ```
 ### AddItem
-Request:
+Adds an item to the given row in the appropriate type.
+#### Request:
+"data" in appropriate type
 ```JSON
 { 
     "command": "writeItem", 
     "name": "yourRowName", 
     "type": "yourRowType", 
-    "data": yourDataInAppropriateType
+    "data": 1234
 }
 ```
-Result:
+#### Result:
 ```JSON
 { 
     "command": "writeItem", 
     "name": "yourRowName", 
-    "error": errorcode 
+    "error": 0
 }
 ```
 
-## Setup
+## Errorcodes
+```
+- 0: SUCCESS
+
+// Database errors
+- 10: NOTFOUND              --> Requested row not found
+- 11: INTERNAL              --> Internal error
+- 12: HASHNAMEMISMATCH      --> Rowname hash mismatch
+- 13: ITEMSCOUNTMISMATCH    --> Already existing row with other itemscount
+- 14: TYPEMISMATCH          --> Type does not match for this row
+
+// Protocol errors
+- 50: NO_COMMAND            --> No command given
+- 51: UNKNOWN_COMMAND       --> Command not known
+- 52: NO_NAME               --> No rowname given
+- 53: NO_TYPE               --> No type given
+- 54: UNKNOWN_TYPE          --> Type not known
+- 55: NO_STARTTIME          --> No starttime given
+- 56: NO_ENDTIME            --> No endtime given
+- 57: NO_ITEMSCOUNT         --> No itemscount given
+- 58: NO_DATA               --> No data given
+- 59: INVALID_DATA          --> Invalid data given
+```
+
+# Setup
 ..Not complete yet
-### Protobuf
-#### Library
+## Protobuf
+### Library
 [Github link](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md) Installed version 3.14.0
 
-#### compiler
+### Compiler
 [Github link](http://google.github.io/proto-lens/installing-protoc.html)
 Installed version 3.14.0
 
-#### After installation
+### After installation
 ```bash
 sudo chown -R $(whoami).$(whoami) /usr/local/include/google
 ```
 
-### Compile
+## Compile
 ```bash
 mkdir build
 cd build
 cmake ..
 make
+sudo make install
 ```
 Without automatic unit-test execution:
 ```bash
@@ -209,4 +245,5 @@ mkdir build
 cd build
 cmake .. _DCOMPILE_GTESTS=OFF
 make
+sudo make install
 ```
