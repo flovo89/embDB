@@ -23,6 +23,24 @@
 #include <iostream>
 #include <sstream>
 
+#include "database/db-guard/DbGuard.hpp"
+#include "database/db-layout/DbLayout.hpp"
+#include "eventloop/EventLoopBreakerOnSignal.hpp"
+#include "eventloop/EventLoopFactory.hpp"
+#include "file-io/FileReader.hpp"
+#include "file-io/FileWriter.hpp"
+#include "logging/Loggers.hpp"
+#include "process/posix/DaemonizerPosix.hpp"
+#include "protocol/ProtocolArbiter.hpp"
+#include "protocol/ProtocolProcessor.hpp"
+#include "protocol/json/JsonProtocol.hpp"
+#include "server/sockets/SocketClient.hpp"
+#include "server/sockets/SocketClientFactory.hpp"
+#include "server/sockets/SocketServer.hpp"
+#include "socket/posix/SocketServer.hpp"
+#include "utilities/DefaultHasher.hpp"
+#include "utilities/DefaultMutex.hpp"
+#include "utilities/DefaultTimestamper.hpp"
 #include "version.hpp"
 
 /* Constants */
@@ -39,6 +57,8 @@ std::string socketPath = DEFAULT_SOCKET_PATH;
 std::string databasePath = DATABASE_FILE_PATH;
 bool isDaemonize = false;
 int tcpport = DEFAULT_TCP_PORT;
+
+std::list<std::shared_ptr<embDB_protocol::IProtocol>> protocols;
 
 //--------------------------------------------------------------------------------------------
 void usage(const char* progname) {
@@ -135,14 +155,156 @@ bool parseArgs(int argc, char* argv[], int& retCode) {
 }
 
 //--------------------------------------------------------------------------------------------
+void buildDatabaseGuard(std::unique_ptr<embDB_database::DbGuard>& guard) {
+  std::unique_ptr<embDB_fileio::FileReader> filereader(
+      new embDB_fileio::FileReader(databasePath));
+  std::unique_ptr<embDB_fileio::FileWriter> filewriter(
+      new embDB_fileio::FileWriter(databasePath));
+  std::unique_ptr<embDB_utilities::IHasher> hasher(
+      new embDB_utilities::DefaultHasher());
+  std::unique_ptr<embDB_utilities::ITimestamper> timestamper(
+      new embDB_utilities::DefaultTimestamper());
+
+  std::unique_ptr<embDB_database::IDataBase> layout(
+      new embDB_database::DbLayout(std::move(filereader), std::move(filewriter),
+                                   std::move(hasher), std::move(timestamper)));
+
+  std::unique_ptr<embDB_utilities::IMutex> mutex(
+      new embDB_utilities::DefaultMutex());
+  guard.reset(new embDB_database::DbGuard(std::move(layout), std::move(mutex)));
+}
+
+//--------------------------------------------------------------------------------------------
+int deserializeDatabase(std::unique_ptr<embDB_database::DbGuard>& guard) {
+  if (guard->deserialize() != embDB_database::DbErrorCode::SUCCESS) {
+    LOG_WA() << "Database could not be deserialized, so clear it all!";
+    if (guard->clearAll() != embDB_database::DbErrorCode::SUCCESS) {
+      LOG_ER() << "Database could not be cleared, FATAL";
+      return -1;
+    }
+  }
+
+  return 0;
+}
+
+//--------------------------------------------------------------------------------------------
+void buildProtocolProcessor(
+    embDB_database::DbGuard& guard,
+    std::unique_ptr<embDB_protocol::ProtocolProcessor>& processor) {
+  std::unique_ptr<embDB_protocol::IProtocol> jsonprotocol(
+      new embDB_protocol::JsonProtocol());
+
+  protocols.push_back(std::move(jsonprotocol));
+  std::unique_ptr<embDB_protocol::IProtocolArbiter> arbiter(
+      new embDB_protocol::ProtocolArbiter(protocols));
+
+  processor.reset(
+      new embDB_protocol::ProtocolProcessor(std::move(arbiter), guard));
+}
+
+//--------------------------------------------------------------------------------------------
+void buildUnixSocketServer(
+    embDB_eventloop::IEventLoop& eventloop,
+    embDB_server::IClientReception& receiver,
+    std::unique_ptr<embDB_server::ISocketServer>& server) {
+  std::unique_ptr<embDB_socket::ISocketServer> socketServerUnix(
+      new embDB_socket::SocketServer(socketPath));
+  socketServerUnix->setAccessMode(S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP);
+  std::unique_ptr<embDB_socket::ISocketServer> socketServer(
+      std::move(socketServerUnix));
+  std::unique_ptr<embDB_server::ISocketClientFactory> clientFactory(
+      new embDB_server::SocketClientFactory());
+  server.reset(new embDB_server::SocketServer(
+      eventloop, std::move(socketServer), std::move(clientFactory), receiver));
+}
+
+//--------------------------------------------------------------------------------------------
+void buildTcpSocketServer(
+    embDB_eventloop::IEventLoop& eventloop,
+    embDB_server::IClientReception& receiver,
+    std::unique_ptr<embDB_server::ISocketServer>& server) {
+  std::unique_ptr<embDB_socket::ISocketServer> socketServerTcp(
+      new embDB_socket::SocketServer(tcpport));
+  std::unique_ptr<embDB_socket::ISocketServer> socketServer(
+      std::move(socketServerTcp));
+  std::unique_ptr<embDB_server::ISocketClientFactory> clientFactory(
+      new embDB_server::SocketClientFactory());
+  server.reset(new embDB_server::SocketServer(
+      eventloop, std::move(socketServer), std::move(clientFactory), receiver));
+}
+
+//--------------------------------------------------------------------------------------------
 int main(int argc, char* argv[]) {
   int retCode;
-  // comet_lib::DaemonizerPosix daemonizer;
+  embDB_process::DaemonizerPosix daemonizer;
 
   GOOGLE_PROTOBUF_VERIFY_VERSION;
 
   // Parse args
   if (!parseArgs(argc, argv, retCode)) return retCode;
+
+  // Initialize logging
+  if (embDB_logging::Loggers::getInstance().initDefault(logConfig)) return -1;
+
+  // Initialize the event loop
+  std::unique_ptr<embDB_eventloop::IEventLoop> eventLoop;
+  if (embDB_eventloop::EventLoopFactory::createDefaultEventLoop(eventLoop))
+    return -1;
+  if (eventLoop->init()) return -1;
+
+  // Build database
+  std::unique_ptr<embDB_database::DbGuard> guard;
+  buildDatabaseGuard(guard);
+
+  // Init database
+  if (deserializeDatabase(guard)) return -1;
+
+  // Build protocolprocessor
+  std::unique_ptr<embDB_protocol::ProtocolProcessor> processor;
+  buildProtocolProcessor(*guard, processor);
+
+  // Build socket servers
+  std::unique_ptr<embDB_server::ISocketServer> unixsocketserver;
+  buildUnixSocketServer(*eventLoop, *processor, unixsocketserver);
+  std::unique_ptr<embDB_server::ISocketServer> tcpsocketserver;
+  buildTcpSocketServer(*eventLoop, *processor, tcpsocketserver);
+
+  // Init socket server
+  if (unixsocketserver->init()) return -1;
+  if (tcpsocketserver->init()) return -1;
+
+  // Quit the app gracefully on signal
+  embDB_eventloop::EventLoopBreakerOnSignal elBreaker(*eventLoop);
+  eventLoop->registerHandledSignal(elBreaker, SIGTERM);
+  eventLoop->registerHandledSignal(elBreaker, SIGINT);
+
+  if (isDaemonize) {
+    int daemonizeStatus;
+    daemonizer.setPidFile(pidFile);
+    daemonizeStatus = daemonizer.daemonize();
+
+    if (daemonizeStatus < 0)
+      return -1;  // Error
+    else if (daemonizeStatus > 0)
+      return 0;  // Parent
+
+    if (eventLoop->reInit()) {
+      LOG_ER() << "Cannot reinit event loop!";
+      return -1;
+    }
+  }
+
+  LOG_IN() << "Starting embDB main loop";
+  retCode = eventLoop->run();
+
+  // Cleanup
+  unixsocketserver->close();
+  tcpsocketserver->close();
+  guard->serialize();
+  google::protobuf::ShutdownProtobufLibrary();
+  if (isDaemonize) daemonizer.removePidFile();
+
+  LOG_IN() << "Exiting embDB with return code " << retCode;
 
   return retCode;
 }

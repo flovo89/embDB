@@ -34,6 +34,7 @@ configure_file (
 find_package(PkgConfig REQUIRED)
 pkg_search_module(PROTO_BUF REQUIRED protobuf>=3.14.0)
 pkg_search_module(LIBEVENT REQUIRED libevent>=2.0)
+pkg_search_module(LIBEVENT_PTHREADS REQUIRED libevent_pthreads>=2.0)
 find_package(nlohmann_json 3.2.0 REQUIRED)
 
 # log4cplus supoprt
