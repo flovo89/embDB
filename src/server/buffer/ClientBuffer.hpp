@@ -23,7 +23,7 @@
 
 namespace embDB_server {
 
-#define BUFFERSIZE 1024
+#define BUFFERSIZE 8192
 
 class ClientBuffer {
  public:

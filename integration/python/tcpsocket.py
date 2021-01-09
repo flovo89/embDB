@@ -15,4 +15,4 @@ class TcpSocket:
         self.sock.send(msg.encode())
 
     def receive(self):
-        return self.sock.recv(32*1024*1024)
+        return self.sock.recv(48*1024*1024)
