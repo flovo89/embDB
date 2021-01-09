@@ -58,4 +58,4 @@ RUN git clone https://github.com/flovo89/embDB.git && \
 
 # Start embDB
 EXPOSE 5678
-CMD embDB --tcpport 5678 --file /embdb.database
+CMD embdb --tcpport 5678 --file /embdb.database

@@ -3,3 +3,4 @@ build
 src/version.hpp
 embdb-layout/cpp/
 src/logging/LoggerConfig.hpp
+integration/python/__pycache__

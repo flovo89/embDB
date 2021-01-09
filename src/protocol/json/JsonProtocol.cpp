@@ -69,6 +69,7 @@ ProtErrorCode JsonProtocol::translateToDataObject(
     switch (com) {
       case ProtocolCommand::DELETE_ROW:
       case ProtocolCommand::CHECK_ROW_EXISTS:
+        break;
       case ProtocolCommand::READ_ROW: {
         if (!checkFieldExists(jsonobj, c_type)) return ProtErrorCode::NO_TYPE;
         embDB_database::DbElementType type;

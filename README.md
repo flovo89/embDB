@@ -44,10 +44,12 @@ The entire database is stored using a protobuf serialization. When the embDB ser
 # Try it out
 
 ## Docker
-### Build 
+### Build & Run
 From the project folder:
 ```BASH
-docker build -t embdb:latest ./integration/docker
+cd integration/docker
+docker build -t "embdb:latest" .
+docker run -d -p 5678:5678 embdb:latest
 ```
 
 ## Python test scripts
