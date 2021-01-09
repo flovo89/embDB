@@ -13,9 +13,9 @@ The database has the following structure
 |    :   |         :       |   :  |    :   |    :   |  :  |   :    |
 | Hash Z | Ringbuffer info | Type | Item a | Item b | ... | Item n |
 
-**Hash**: Built from the name-string
+**Hash**: Built from the row-name, 
 
-**Ringbuffer info**: Index, maxItems, overflow, curItem. 
+**Ringbuffer info**: Index, maxItems, overflow, curItem (stuff for ringbuffer). 
 
 **Type**: Datatype of items in row
 
@@ -59,7 +59,7 @@ cd integration/python
 python test_main.py
 ```
 
-This script exits one test fails. What it basically does is:
+This script exits after one test fails or on successful execution of all tests. What it basically does is:
 - Connect to TCP socket of running docker container
 - Add / Delete rows
 - Clear database
