@@ -5,23 +5,14 @@ Due to its simplicity the main focus lies on embedded linux devices. But it is n
 
 # Facts
 
-## Database structure
-The database has the following structure
-
-| Hash X | Ringbuffer info | Type | Item A | Item B | ... | Item N |
-|--------|-----------------|------|--------|--------|-----|--------|
-|    :   |         :       |   :  |    :   |    :   |  :  |   :    |
-| Hash Z | Ringbuffer info | Type | Item a | Item b | ... | Item n |
-
-**Hash**: Built from the row-name, 
-
-**Ringbuffer info**: Index, maxItems, overflow, curItem (stuff for ringbuffer). 
-
-**Type**: Datatype of items in row
-
-**Item x**: One item, containing timestamp & value
-
-**Each row has its own itemscount and overflows automatically if more than itemscount items are added.**
+## Key capabilities
+- Each row can have its own datatype and maximal itemcount.
+- Automated overwriting of old items in ringbuffer manner per row.
+- Each item has its timestamp in milliseconds automatically set by the database.
+- Read out of items can be done on entire row or between timestamps in row.
+- The database is strictly enforcing the usage of datatypes and is typesafe.
+- The access to the database is threadsafe implemented.
+- Serialization / Deserialization is done automatically on start / stop of embDB service.
 
 ## Datatypes
 Supported datatypes are:
@@ -63,9 +54,27 @@ This script exits after one test fails or on successful execution of all tests. 
 - Connect to TCP socket of running docker container
 - Add / Delete rows
 - Clear database
-- Write / Read items to rows
+- Write / Read item to rows
 
 **To execute the python script, the docker container must be running (see above)**
+
+# Database structure
+The database has the following structure
+
+| Hash X | Ringbuffer info | Type | Item A | Item B | ... | Item N |
+|--------|-----------------|------|--------|--------|-----|--------|
+|    :   |         :       |   :  |    :   |    :   |  :  |   :    |
+| Hash Z | Ringbuffer info | Type | Item a | Item b | ... | Item n |
+
+**Hash**: Built from the row-name, 
+
+**Ringbuffer info**: Index, maxItems, overflow, curItem (stuff for ringbuffer). 
+
+**Type**: Datatype of items in row
+
+**Item x**: One item, containing timestamp & value
+
+**Each row has its own itemscount and overflows automatically if more than itemscount items are added.**
 
 # Interface
 
@@ -265,7 +274,7 @@ Adds an item to the given row in the appropriate type. If you add floating point
 # Setup
 
 ## Environment setup
-Please refer to the [Dockerfile](integration/docker/Dockerfile) as an example to setup your environment.
+Please refer to the [Dockerfile](integration/docker/Dockerfile) as an example of how to setup your build environment.
 
 ## Compile embDB
 ```bash
