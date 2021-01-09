@@ -206,7 +206,7 @@ Returns all items between the given start & end time.
 }
 ```
 ### AddItem
-Adds an item to the given row in the appropriate type.
+Adds an item to the given row in the appropriate type. If you add floating point items you always need to add **at least one position after decimal point** (e.g. for 0 --> 0.0)
 #### Request:
 "data" in appropriate type
 ```JSON
@@ -251,7 +251,6 @@ Adds an item to the given row in the appropriate type.
 ```
 
 # Setup
-
 
 ## Compile
 ```bash
