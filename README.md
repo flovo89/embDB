@@ -1,7 +1,7 @@
 # embDB
 Simple Time Series Database 
 
-Due to its simplicity the main focus is on embedded linux devices. But it is not exclusively developed for embedded devices. The database scales perfectly and can be used on full-blown linux distros as well.
+Due to its simplicity the main focus lies on embedded linux devices. But it is not exclusively developed for embedded devices. The database scales perfectly and can be used on full-blown linux distros as well.
 
 # Facts
 
@@ -53,7 +53,19 @@ docker run -d -p 5678:5678 embdb:latest
 ```
 
 ## Python test scripts
+There are test scripts written in Python which can also help as examples how to use the database.
+```
+cd integration/python
+python test_main.py
+```
 
+This script exits one test fails. What it basically does is:
+- Connect to TCP socket of running docker container
+- Add / Delete rows
+- Clear database
+- Write / Read items to rows
+
+**To execute the python script, the docker container must be running (see above)**
 
 # Interface
 
@@ -267,7 +279,7 @@ Without automatic unit-test execution:
 ```bash
 mkdir build
 cd build
-cmake .. _DCOMPILE_GTESTS=OFF
+cmake .. -DCOMPILE_GTESTS=OFF
 make
 sudo make install
 ```
