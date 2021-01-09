@@ -252,7 +252,10 @@ Adds an item to the given row in the appropriate type. If you add floating point
 
 # Setup
 
-## Compile
+## Environment setup
+Please refer to the [Dockerfile](integration/docker/Dockerfile) as an example to setup your environment.
+
+## Compile embDB
 ```bash
 mkdir build
 cd build
