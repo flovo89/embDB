@@ -1,10 +1,17 @@
 FROM ubuntu:18.04
 
+LABEL version="1.0"
+LABEL description="Container used to compile and run linux application unit-tests"
+LABEL maintainer="flovo89"
+
+# Avoid that install package stalls on 
+# asking for timezone in configure tzdata
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt-get update && apt-get install -y \
     cmake \
     build-essential \
-    libgtest-dev \
-    google-mock \
+    curl \
     git \
     pkg-config \
     libevent-dev \
@@ -21,6 +28,14 @@ RUN apt-get install autoconf automake libtool curl make g++ unzip -y && \
     make && \
     make install && \
     ldconfig
+
+# Install googletest version 1.10.0
+RUN curl -OL https://github.com/google/googletest/archive/release-1.10.0.tar.gz && \
+    tar xzf release-1.10.0.tar.gz && \
+    cd googletest-release-1.10.0 && \
+    mkdir build && cd build && \
+    cmake .. && \
+    make install
 
 # Nlohmann json
 RUN git clone https://github.com/nlohmann/json.git && \
@@ -40,3 +55,7 @@ RUN git clone https://github.com/flovo89/embDB.git && \
     cmake .. && \
     make && \
     make install
+
+# Start embDB
+EXPOSE 5678
+CMD embDB --tcpport 5678 --file /embdb.database

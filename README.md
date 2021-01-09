@@ -10,7 +10,7 @@ The database has the following structure
 
 | Hash X | Ringbuffer info | Type | Item A | Item B | ... | Item N |
 |--------|-----------------|------|--------|--------|-----|--------|
-|    :   |         :       |   :  |     :   |     :   |  :  |    :    |
+|    :   |         :       |   :  |    :   |    :   |  :  |   :    |
 | Hash Z | Ringbuffer info | Type | Item a | Item b | ... | Item n |
 
 **Hash**: Built from the name-string
@@ -40,6 +40,18 @@ Each entry in the database has its timestamp which has millisecond resolution si
 
 ## Limitations
 The entire database is stored using a protobuf serialization. When the embDB service is running, the entire database is kept in RAM. When the service is stopped, the latest db version from RAM is serialized and stored to the persistent location. Therefore a proper stop of the service is necessary. Proper in this case means by SIGTERM or SIGINT.
+
+# Try it out
+
+## Docker
+### Build 
+From the project folder:
+```BASH
+docker build -t embdb:latest ./integration/docker
+```
+
+## Python test scripts
+
 
 # Interface
 
@@ -237,19 +249,7 @@ Adds an item to the given row in the appropriate type.
 ```
 
 # Setup
-..Not complete yet
-## Protobuf
-### Library
-[Github link](https://github.com/protocolbuffers/protobuf/blob/master/src/README.md) Installed version 3.14.0
 
-### Compiler
-[Github link](http://google.github.io/proto-lens/installing-protoc.html)
-Installed version 3.14.0
-
-### After installation
-```bash
-sudo chown -R $(whoami).$(whoami) /usr/local/include/google
-```
 
 ## Compile
 ```bash
