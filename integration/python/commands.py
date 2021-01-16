@@ -78,7 +78,7 @@ class CommandInterpreter:
         print("================================")
         print("circularRowCount")
         if(dict["error"] == 0):
-            print("count: " + str(dict["circularRowCount"]))
+            print("count: " + str(dict["rowCount"]))
         print("error: " + str(dict["error"]))
         print("================================")
 
