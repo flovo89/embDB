@@ -102,7 +102,7 @@ Creates a new row in the database. A row with an unique name must be created to 
 #### Request:
 ```JSON
 { 
-    "command": "createRow", 
+    "command": "createCircularRow", 
     "name": "yourRowName", 
     "type": "yourRowType", 
     "itemsCount": 1000 
@@ -111,7 +111,7 @@ Creates a new row in the database. A row with an unique name must be created to 
 #### Result:
 ```JSON
 { 
-    "command": "createRow", 
+    "command": "createCircularRow", 
     "name": "yourRowName", 
     "error": 0
 }
@@ -122,13 +122,13 @@ Clears all rows with their items.
 #### Request:
 ```JSON
 { 
-    "command": "clearAll" 
+    "command": "clearAllCircular" 
 }
 ```
 #### Result:
 ```JSON
 { 
-    "command": "clearAll", 
+    "command": "clearAllCircular", 
     "error": 0
 }
 ```
@@ -137,14 +137,14 @@ Deletes the row with the specified name.
 #### Request:
 ```JSON
 { 
-    "command": "deleteRow", 
+    "command": "deleteCircularRow", 
     "name": "yourRowName" 
 }
 ```
 #### Result:
 ```JSON
 { 
-    "command": "deleteRow", 
+    "command": "deleteCircularRow", 
     "name": "yourRowName", 
     "error": 0 
 }
@@ -154,14 +154,14 @@ Returns info if the row exists.
 ##### Request:
 ```JSON
 { 
-    "command": "rowExists", 
+    "command": "circularRowExists", 
     "name": "yourRowName" 
 }
 ```
 #### Result:
 ```JSON
 { 
-    "command": "rowExists", 
+    "command": "circularRowExists", 
     "name": "yourRowName", 
     "error": 0, 
     "rowExists": true 
@@ -172,13 +172,13 @@ Number of all rows in database.
 #### Request:
 ```JSON
 { 
-    "command": "rowCount" 
+    "command": "circularRowCount" 
 }
 ```
 #### Result:
 ```JSON
 { 
-    "command": "rowCount", 
+    "command": "circularRowCount", 
     "error": 0, 
     "rowCount": 2 
 }
@@ -188,7 +188,7 @@ Read all items in a row.
 #### Request:
 ```JSON
 { 
-    "command": "readRow", 
+    "command": "readCircularRow", 
     "name": "yourRowName", 
     "type": "yourRowType" 
 }
@@ -196,7 +196,7 @@ Read all items in a row.
 #### Result:
 ```JSON
 { 
-    "command": "readRow", 
+    "command": "readCircularRow", 
     "error": 0, 
     "type": "yourRowType", 
     "values": [{"value": 89, "timestamp": 1234567891},{}] 
@@ -207,7 +207,7 @@ Returns all items between the given start & end time.
 #### Request:
 ```JSON
 { 
-    "command": "readRowTimestamped", 
+    "command": "readCircularRowTimestamped", 
     "name": "yourRowName", 
     "type": "yourRowType", 
     "startTime": 1234567890, 
@@ -217,7 +217,7 @@ Returns all items between the given start & end time.
 #### Result:
 ```JSON
 { 
-    "command": "readRowTimestamped", 
+    "command": "readCircularRowTimestamped", 
     "error": 0, 
     "rowCount": 10, 
     "startTime": 1234567890, 
@@ -232,7 +232,7 @@ Adds an item to the given row in the appropriate type. If you add floating point
 "data" in appropriate type
 ```JSON
 { 
-    "command": "writeItem", 
+    "command": "writeItemCircular", 
     "name": "yourRowName", 
     "type": "yourRowType", 
     "data": 1234
@@ -241,7 +241,7 @@ Adds an item to the given row in the appropriate type. If you add floating point
 #### Result:
 ```JSON
 { 
-    "command": "writeItem", 
+    "command": "writeItemCircular", 
     "name": "yourRowName", 
     "error": 0
 }

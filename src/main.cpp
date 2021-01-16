@@ -24,7 +24,7 @@
 #include <sstream>
 
 #include "database/db-guard/DbGuard.hpp"
-#include "database/db-layout/DbLayout.hpp"
+#include "database/db-layout/DbLayoutCircular.hpp"
 #include "eventloop/EventLoopBreakerOnSignal.hpp"
 #include "eventloop/EventLoopFactory.hpp"
 #include "file-io/FileReader.hpp"
@@ -165,9 +165,10 @@ void buildDatabaseGuard(std::unique_ptr<embDB_database::DbGuard>& guard) {
   std::unique_ptr<embDB_utilities::ITimestamper> timestamper(
       new embDB_utilities::DefaultTimestamper());
 
-  std::unique_ptr<embDB_database::IDataBase> layout(
-      new embDB_database::DbLayout(std::move(filereader), std::move(filewriter),
-                                   std::move(hasher), std::move(timestamper)));
+  std::unique_ptr<embDB_database::IDataBaseCircular> layout(
+      new embDB_database::DbLayoutCircular(
+          std::move(filereader), std::move(filewriter), std::move(hasher),
+          std::move(timestamper)));
 
   std::unique_ptr<embDB_utilities::IMutex> mutex(
       new embDB_utilities::DefaultMutex());

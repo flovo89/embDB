@@ -32,7 +32,8 @@ message DataItem {
   }
 }
 
-message DataRow {
+// ---- Used for circular db ----
+message DataRowCircular {
   uint64 hash = 1;
   string name = 2;
   DataType type = 3;
@@ -42,7 +43,14 @@ message DataRow {
   repeated DataItem items = 7;
 }
 
-message DataLayout {
+// ---- Used for circular db ----
+message DataLayoutCircular {
   Header header = 1;
-  repeated DataRow rows = 2;
+  repeated DataRowCircular rows = 2;
 }
+
+// ---- Used for linear db ----
+
+// ---- Used for linear db ----
+
+

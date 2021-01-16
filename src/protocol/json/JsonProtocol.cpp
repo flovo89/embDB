@@ -18,6 +18,7 @@
 
 #include "JsonProtocol.hpp"
 
+#include "../../database/DbErrorCode.hpp"
 #include "../../exception/Exception.hpp"
 #include "../ProtErrorCode.hpp"
 
@@ -298,21 +299,21 @@ bool JsonProtocol::checkFieldExists(json::object_t& field, std::string key) {
 //--------------------------------------------------------------------------------------------
 int JsonProtocol::parseStringToCommand(const std::string& strcommand,
                                        ProtocolCommand& protCommand) {
-  if (strcommand == c_command_readrow)
+  if (strcommand == c_command_readcircularrow)
     protCommand = ProtocolCommand::READ_ROW;
-  else if (strcommand == c_command_readrowtimestamped)
+  else if (strcommand == c_command_readcircularrowtimestamped)
     protCommand = ProtocolCommand::READ_ROW_TIMESTAMPED;
-  else if (strcommand == c_command_clearall)
+  else if (strcommand == c_command_clearallcircular)
     protCommand = ProtocolCommand::CLEAR_ALL;
-  else if (strcommand == c_command_createrow)
+  else if (strcommand == c_command_createcircularrow)
     protCommand = ProtocolCommand::CREATE_ROW;
-  else if (strcommand == c_command_deleterow)
+  else if (strcommand == c_command_deletecircularrow)
     protCommand = ProtocolCommand::DELETE_ROW;
-  else if (strcommand == c_command_rowexists)
+  else if (strcommand == c_command_circularrowexists)
     protCommand = ProtocolCommand::CHECK_ROW_EXISTS;
-  else if (strcommand == c_command_rowcount)
+  else if (strcommand == c_command_circularrowcount)
     protCommand = ProtocolCommand::GET_ROW_COUNT;
-  else if (strcommand == c_command_writeitem)
+  else if (strcommand == c_command_writeitemcircular)
     protCommand = ProtocolCommand::WRITE_ITEM;
   else
     return -1;
@@ -325,28 +326,28 @@ int JsonProtocol::parseCommandToString(ProtocolCommand protCommand,
                                        std::string& strcommand) {
   switch (protCommand) {
     case ProtocolCommand::READ_ROW:
-      strcommand = c_command_readrow;
+      strcommand = c_command_readcircularrow;
       break;
     case ProtocolCommand::READ_ROW_TIMESTAMPED:
-      strcommand = c_command_readrowtimestamped;
+      strcommand = c_command_readcircularrowtimestamped;
       break;
     case ProtocolCommand::CLEAR_ALL:
-      strcommand = c_command_clearall;
+      strcommand = c_command_clearallcircular;
       break;
     case ProtocolCommand::CREATE_ROW:
-      strcommand = c_command_createrow;
+      strcommand = c_command_createcircularrow;
       break;
     case ProtocolCommand::DELETE_ROW:
-      strcommand = c_command_deleterow;
+      strcommand = c_command_deletecircularrow;
       break;
     case ProtocolCommand::CHECK_ROW_EXISTS:
-      strcommand = c_command_rowexists;
+      strcommand = c_command_circularrowexists;
       break;
     case ProtocolCommand::GET_ROW_COUNT:
-      strcommand = c_command_rowcount;
+      strcommand = c_command_circularrowcount;
       break;
     case ProtocolCommand::WRITE_ITEM:
-      strcommand = c_command_writeitem;
+      strcommand = c_command_writeitemcircular;
       break;
     default:
       return -1;

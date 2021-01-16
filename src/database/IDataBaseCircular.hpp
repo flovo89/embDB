@@ -15,8 +15,8 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _EMBDB_I_DATABASE_
-#define _EMBDB_I_DATABASE_
+#ifndef _EMBDB_I_DATABASE_CIRCULAR_HPP_
+#define _EMBDB_I_DATABASE_CIRCULAR_HPP_
 
 #include <list>
 
@@ -26,10 +26,10 @@
 
 namespace embDB_database {
 
-class IDataBase {
+class IDataBaseCircular {
  public:
-  IDataBase();
-  virtual ~IDataBase();
+  IDataBaseCircular();
+  virtual ~IDataBaseCircular();
 
   virtual DbErrorCode deserialize() = 0;
   virtual DbErrorCode serialize() = 0;

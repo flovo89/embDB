@@ -24,7 +24,7 @@
 #include <vector>
 
 #include "../database/DbElementType.hpp"
-#include "../database/IDataBase.hpp"
+#include "../database/db-element/DbElement.hpp"
 #include "../errorcode/ErrorCode.hpp"
 #include "ProtocolCommand.hpp"
 

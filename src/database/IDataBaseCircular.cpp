@@ -15,14 +15,14 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "IDataBase.hpp"
+#include "IDataBaseCircular.hpp"
 
 namespace embDB_database {
 
 //--------------------------------------------------------------------------------------------
-IDataBase::IDataBase() {}
+IDataBaseCircular::IDataBaseCircular() {}
 
 //--------------------------------------------------------------------------------------------
-IDataBase::~IDataBase() {}
+IDataBaseCircular::~IDataBaseCircular() {}
 
 }  // namespace embDB_database

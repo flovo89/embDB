@@ -15,27 +15,27 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef _EMBDB_DB_LAYOUT_
-#define _EMBDB_DB_LAYOUT_
+#ifndef _EMBDB_DB_LAYOUT_CIRCULAR_HPP_
+#define _EMBDB_DB_LAYOUT_CIRCULAR_HPP_
 
 #include "../../file-io/FileReader.hpp"
 #include "../../file-io/FileWriter.hpp"
 #include "../../utilities/IHasher.hpp"
 #include "../../utilities/ITimestamper.hpp"
-#include "../IDataBase.hpp"
+#include "../IDataBaseCircular.hpp"
 
 namespace embDB_database {
 
 using namespace google::protobuf;
 using namespace embDB_protolayout;
 
-class DbLayout : public IDataBase {
+class DbLayoutCircular : public IDataBaseCircular {
  public:
-  DbLayout(std::unique_ptr<embDB_fileio::FileReader> reader,
-           std::unique_ptr<embDB_fileio::FileWriter> writer,
-           std::unique_ptr<embDB_utilities::IHasher> hasher,
-           std::unique_ptr<embDB_utilities::ITimestamper> timestamper);
-  virtual ~DbLayout();
+  DbLayoutCircular(std::unique_ptr<embDB_fileio::FileReader> reader,
+                   std::unique_ptr<embDB_fileio::FileWriter> writer,
+                   std::unique_ptr<embDB_utilities::IHasher> hasher,
+                   std::unique_ptr<embDB_utilities::ITimestamper> timestamper);
+  virtual ~DbLayoutCircular();
 
   friend class DbGuard;
 
@@ -67,22 +67,22 @@ class DbLayout : public IDataBase {
   std::unique_ptr<embDB_utilities::ITimestamper> m_timestamper;
 
   bool m_isDeserialized;
-  embDB_protolayout::DataLayout m_dataLayout;
+  embDB_protolayout::DataLayoutCircular m_dataLayout;
 
   const uint32_t c_version = 1;
 
-  int getRow(std::string name, DataRow& row) const;
-  int getRowMutable(std::string name, DataRow** row);
-  void getName(const DataRow& row, std::string& name) const;
-  void getType(const DataRow& row, DbElementType& type) const;
-  void getOverflow(const DataRow& row, bool& overflow) const;
-  void setOverflow(DataRow* row, bool overflow);
-  void getMaxItems(const DataRow& row, uint32_t& maxItems) const;
-  void getCurItem(const DataRow& row, uint32_t& curItem) const;
-  void setCurItem(DataRow* row, uint32_t curItem);
-  void getDataItems(const DataRow& row,
+  int getRow(std::string name, DataRowCircular& row) const;
+  int getRowMutable(std::string name, DataRowCircular** row);
+  void getName(const DataRowCircular& row, std::string& name) const;
+  void getType(const DataRowCircular& row, DbElementType& type) const;
+  void getOverflow(const DataRowCircular& row, bool& overflow) const;
+  void setOverflow(DataRowCircular* row, bool overflow);
+  void getMaxItems(const DataRowCircular& row, uint32_t& maxItems) const;
+  void getCurItem(const DataRowCircular& row, uint32_t& curItem) const;
+  void setCurItem(DataRowCircular* row, uint32_t curItem);
+  void getDataItems(const DataRowCircular& row,
                     RepeatedPtrField<DataItem>& items) const;
-  void getDataItemsMutable(DataRow* row, RepeatedPtrField<DataItem>** items);
+  void getDataItemsMutable(DataRowCircular* row, RepeatedPtrField<DataItem>** items);
   void getDataElement(DbElementType type, const DataItem* item,
                       DbElement& element);
   void setDataItem(const DbElement& element, DataItem* item);

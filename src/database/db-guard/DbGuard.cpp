@@ -21,7 +21,7 @@
 namespace embDB_database {
 
 //--------------------------------------------------------------------------------------------
-DbGuard::DbGuard(std::unique_ptr<IDataBase> layout,
+DbGuard::DbGuard(std::unique_ptr<IDataBaseCircular> layout,
                  std::unique_ptr<embDB_utilities::IMutex> mutex)
     : m_layout(std::move(layout)), m_mutex(std::move(mutex)) {}
 

@@ -16,17 +16,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include "DbLayout.hpp"
+#include "DbLayoutCircular.hpp"
 
 #include "../../exception/Exception.hpp"
 
 namespace embDB_database {
 
 //--------------------------------------------------------------------------------------------
-DbLayout::DbLayout(std::unique_ptr<embDB_fileio::FileReader> reader,
-                   std::unique_ptr<embDB_fileio::FileWriter> writer,
-                   std::unique_ptr<embDB_utilities::IHasher> hasher,
-                   std::unique_ptr<embDB_utilities::ITimestamper> timestamper)
+DbLayoutCircular::DbLayoutCircular(
+    std::unique_ptr<embDB_fileio::FileReader> reader,
+    std::unique_ptr<embDB_fileio::FileWriter> writer,
+    std::unique_ptr<embDB_utilities::IHasher> hasher,
+    std::unique_ptr<embDB_utilities::ITimestamper> timestamper)
     : m_reader(std::move(reader)),
       m_writer(std::move(writer)),
       m_hasher(std::move(hasher)),
@@ -34,10 +35,10 @@ DbLayout::DbLayout(std::unique_ptr<embDB_fileio::FileReader> reader,
       m_isDeserialized(false) {}
 
 //--------------------------------------------------------------------------------------------
-DbLayout::~DbLayout() {}
+DbLayoutCircular::~DbLayoutCircular() {}
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayout::deserialize() {
+DbErrorCode DbLayoutCircular::deserialize() {
   // Deserialize from file
   m_reader->open();
   if (!m_dataLayout.ParseFromIstream(m_reader.get())) {
@@ -54,7 +55,7 @@ DbErrorCode DbLayout::deserialize() {
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayout::serialize() {
+DbErrorCode DbLayoutCircular::serialize() {
   // Set version
   m_dataLayout.mutable_header()->set_version(c_version);
 
@@ -70,7 +71,7 @@ DbErrorCode DbLayout::serialize() {
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayout::clearAll() {
+DbErrorCode DbLayoutCircular::clearAll() {
   m_dataLayout.Clear();
 
   // Jap, because we start from scratch
@@ -80,7 +81,7 @@ DbErrorCode DbLayout::clearAll() {
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayout::getVersion(uint32_t& version) {
+DbErrorCode DbLayoutCircular::getVersion(uint32_t& version) {
   if (!m_isDeserialized) {
     return DbErrorCode::INTERNAL;
   }
@@ -91,7 +92,7 @@ DbErrorCode DbLayout::getVersion(uint32_t& version) {
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayout::getRowCount(uint32_t& count) {
+DbErrorCode DbLayoutCircular::getRowCount(uint32_t& count) {
   if (!m_isDeserialized) {
     return DbErrorCode::INTERNAL;
   }
@@ -101,13 +102,13 @@ DbErrorCode DbLayout::getRowCount(uint32_t& count) {
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayout::createRow(std::string name, DbElementType type,
-                                uint32_t maxItems) {
+DbErrorCode DbLayoutCircular::createRow(std::string name, DbElementType type,
+                                        uint32_t maxItems) {
   if (!m_isDeserialized) {
     return DbErrorCode::INTERNAL;
   }
 
-  DataRow stub;
+  DataRowCircular stub;
   uint32_t stubitems;
   DbElementType stubtype;
   if (!getRow(name, stub)) {
@@ -121,7 +122,7 @@ DbErrorCode DbLayout::createRow(std::string name, DbElementType type,
       return DbErrorCode::SUCCESS;
   }
 
-  DataRow* row = m_dataLayout.add_rows();
+  DataRowCircular* row = m_dataLayout.add_rows();
   uint64_t hash = m_hasher->hashStringToUint64(name);
   row->set_name(name);
   row->set_hash(hash);
@@ -134,14 +135,14 @@ DbErrorCode DbLayout::createRow(std::string name, DbElementType type,
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayout::rowExists(std::string name, bool& exists) {
+DbErrorCode DbLayoutCircular::rowExists(std::string name, bool& exists) {
   if (!m_isDeserialized) {
     return DbErrorCode::INTERNAL;
   }
 
   exists = false;
 
-  DataRow row;
+  DataRowCircular row;
   if (getRow(name, row)) return DbErrorCode::SUCCESS;
 
   // If this occurs, two strings might have generated same hash...
@@ -154,7 +155,7 @@ DbErrorCode DbLayout::rowExists(std::string name, bool& exists) {
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayout::deleteRow(std::string name) {
+DbErrorCode DbLayoutCircular::deleteRow(std::string name) {
   if (!m_isDeserialized) {
     return DbErrorCode::INTERNAL;
   }
@@ -176,10 +177,10 @@ DbErrorCode DbLayout::deleteRow(std::string name) {
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayout::getAllItems(std::string name,
-                                  std::list<DbElement>& elements) {
+DbErrorCode DbLayoutCircular::getAllItems(std::string name,
+                                          std::list<DbElement>& elements) {
   RepeatedPtrField<DataItem> dataItems;
-  DataRow row;
+  DataRowCircular row;
   bool overflow;
   uint32_t maxItems;
   uint32_t curItem;
@@ -216,9 +217,9 @@ DbErrorCode DbLayout::getAllItems(std::string name,
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayout::getItemsBetween(std::string name, int64_t start,
-                                      int64_t end,
-                                      std::list<DbElement>& elements) {
+DbErrorCode DbLayoutCircular::getItemsBetween(std::string name, int64_t start,
+                                              int64_t end,
+                                              std::list<DbElement>& elements) {
   std::list<DbElement> tempElements;
   DbErrorCode err = getAllItems(name, tempElements);
 
@@ -234,9 +235,10 @@ DbErrorCode DbLayout::getItemsBetween(std::string name, int64_t start,
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayout::addItem(std::string name, const DbElement& element) {
+DbErrorCode DbLayoutCircular::addItem(std::string name,
+                                      const DbElement& element) {
   RepeatedPtrField<DataItem>* dataItems;
-  DataRow* row;
+  DataRowCircular* row;
   bool overflow;
   uint32_t maxItems;
   uint32_t curItem;
@@ -283,7 +285,7 @@ DbErrorCode DbLayout::addItem(std::string name, const DbElement& element) {
 }
 
 //--------------------------------------------------------------------------------------------
-int DbLayout::getRow(std::string name, DataRow& row) const {
+int DbLayoutCircular::getRow(std::string name, DataRowCircular& row) const {
   uint64_t hash = m_hasher->hashStringToUint64(name);
 
   if (m_dataLayout.rows_size() > 0) {
@@ -299,7 +301,7 @@ int DbLayout::getRow(std::string name, DataRow& row) const {
 }
 
 //--------------------------------------------------------------------------------------------
-int DbLayout::getRowMutable(std::string name, DataRow** row) {
+int DbLayoutCircular::getRowMutable(std::string name, DataRowCircular** row) {
   uint64_t hash = m_hasher->hashStringToUint64(name);
   bool found = false;
   uint32_t index = 0;
@@ -323,55 +325,60 @@ int DbLayout::getRowMutable(std::string name, DataRow** row) {
 }
 
 //--------------------------------------------------------------------------------------------
-void DbLayout::getName(const DataRow& row, std::string& name) const {
+void DbLayoutCircular::getName(const DataRowCircular& row,
+                               std::string& name) const {
   name = row.name();
 }
 
 //--------------------------------------------------------------------------------------------
-void DbLayout::getType(const DataRow& row, DbElementType& type) const {
+void DbLayoutCircular::getType(const DataRowCircular& row,
+                               DbElementType& type) const {
   type = static_cast<DbElementType>(row.type());
 }
 
 //--------------------------------------------------------------------------------------------
-void DbLayout::getOverflow(const DataRow& row, bool& overflow) const {
+void DbLayoutCircular::getOverflow(const DataRowCircular& row,
+                                   bool& overflow) const {
   overflow = row.overflow();
 }
 
 //--------------------------------------------------------------------------------------------
-void DbLayout::setOverflow(DataRow* row, bool overflow) {
+void DbLayoutCircular::setOverflow(DataRowCircular* row, bool overflow) {
   row->set_overflow(overflow);
 }
 
 //--------------------------------------------------------------------------------------------
-void DbLayout::getMaxItems(const DataRow& row, uint32_t& maxItems) const {
+void DbLayoutCircular::getMaxItems(const DataRowCircular& row,
+                                   uint32_t& maxItems) const {
   maxItems = row.maxitems();
 }
 
 //--------------------------------------------------------------------------------------------
-void DbLayout::getCurItem(const DataRow& row, uint32_t& curItem) const {
+void DbLayoutCircular::getCurItem(const DataRowCircular& row,
+                                  uint32_t& curItem) const {
   curItem = row.curitem();
 }
 
 //--------------------------------------------------------------------------------------------
-void DbLayout::setCurItem(DataRow* row, uint32_t curItem) {
+void DbLayoutCircular::setCurItem(DataRowCircular* row, uint32_t curItem) {
   row->set_curitem(curItem);
 }
 
 //--------------------------------------------------------------------------------------------
-void DbLayout::getDataItems(const DataRow& row,
-                            RepeatedPtrField<DataItem>& items) const {
+void DbLayoutCircular::getDataItems(const DataRowCircular& row,
+                                    RepeatedPtrField<DataItem>& items) const {
   items = row.items();
 }
 
 //--------------------------------------------------------------------------------------------
-void DbLayout::getDataItemsMutable(DataRow* row,
-                                   RepeatedPtrField<DataItem>** items) {
+void DbLayoutCircular::getDataItemsMutable(DataRowCircular* row,
+                                           RepeatedPtrField<DataItem>** items) {
   *items = row->mutable_items();
 }
 
 //--------------------------------------------------------------------------------------------
-void DbLayout::getDataElement(DbElementType type, const DataItem* item,
-                              DbElement& element) {
+void DbLayoutCircular::getDataElement(DbElementType type, const DataItem* item,
+                                      DbElement& element) {
   std::vector<uint8_t> vec;
 
   switch (type) {
@@ -411,7 +418,7 @@ void DbLayout::getDataElement(DbElementType type, const DataItem* item,
 }
 
 //--------------------------------------------------------------------------------------------
-void DbLayout::setDataItem(const DbElement& element, DataItem* item) {
+void DbLayoutCircular::setDataItem(const DbElement& element, DataItem* item) {
   std::vector<uint8_t> vec;
 
   switch (element.getType()) {

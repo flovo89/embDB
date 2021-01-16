@@ -21,10 +21,8 @@
 #include <sstream>
 #include <vector>
 
-#include "../../../src/database/db-layout/DbLayout.hpp"
-// #include "../../mocks/HasherMock.hpp"
-// #include "../../mocks/TimestamperMock.hpp"
 #include "../../../src/database/db-guard/DbGuard.hpp"
+#include "../../../src/database/db-layout/DbLayoutCircular.hpp"
 #include "../../../src/utilities/DefaultHasher.hpp"
 #include "../../../src/utilities/DefaultMutex.hpp"
 #include "../../../src/utilities/DefaultTimestamper.hpp"
@@ -42,8 +40,9 @@ class DbLayoutGuardTest : public testing::Test {
     _fileReader.reset(new embDB_fileio::FileReader("testdatabase.protobuf"));
     _fileWriter.reset(new embDB_fileio::FileWriter("testdatabase.protobuf"));
 
-    _layout.reset(new DbLayout(std::move(_fileReader), std::move(_fileWriter),
-                               std::move(_hasher), std::move(_timestamper)));
+    _layout.reset(
+        new DbLayoutCircular(std::move(_fileReader), std::move(_fileWriter),
+                             std::move(_hasher), std::move(_timestamper)));
     _mutex.reset(new embDB_utilities::DefaultMutex());
 
     _guard.reset(new DbGuard(std::move(_layout), std::move(_mutex)));
@@ -55,7 +54,7 @@ class DbLayoutGuardTest : public testing::Test {
   std::unique_ptr<embDB_fileio::FileReader> _fileReader;
   std::unique_ptr<embDB_fileio::FileWriter> _fileWriter;
 
-  std::unique_ptr<DbLayout> _layout;
+  std::unique_ptr<DbLayoutCircular> _layout;
   std::unique_ptr<embDB_utilities::IMutex> _mutex;
 
   std::unique_ptr<DbGuard> _guard;

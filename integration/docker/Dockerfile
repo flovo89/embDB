@@ -50,6 +50,7 @@ RUN git clone https://github.com/nlohmann/json.git && \
 # Compile and install embDB
 RUN git clone https://github.com/flovo89/embDB.git && \
     cd /embDB && \
+    git checkout linear_db && \
     mkdir build && \
     cd build && \
     cmake .. && \

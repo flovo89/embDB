@@ -19,18 +19,18 @@
 #define _EMBDB_DB_GUARD_
 
 #include "../../utilities/IMutex.hpp"
-#include "../IDataBase.hpp"
-#include "../db-layout/DbLayout.hpp"
+#include "../IDataBaseCircular.hpp"
+#include "../db-layout/DbLayoutCircular.hpp"
 
 namespace embDB_database {
 
-class DbGuard : public IDataBase {
+class DbGuard : public IDataBaseCircular {
  public:
-  DbGuard(std::unique_ptr<IDataBase> layout,
+  DbGuard(std::unique_ptr<IDataBaseCircular> layout,
           std::unique_ptr<embDB_utilities::IMutex> mutex);
   virtual ~DbGuard();
 
-  // IDataBase
+  // IDataBaseCircular
   virtual DbErrorCode deserialize() override;
   virtual DbErrorCode serialize() override;
   virtual DbErrorCode clearAll() override;
@@ -52,7 +52,7 @@ class DbGuard : public IDataBase {
                               const DbElement& element) override;
 
  private:
-  std::unique_ptr<IDataBase> m_layout;
+  std::unique_ptr<IDataBaseCircular> m_layout;
   std::unique_ptr<embDB_utilities::IMutex> m_mutex;
 };
 

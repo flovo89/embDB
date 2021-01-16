@@ -19,6 +19,7 @@
 #ifndef _EMBDB_I_PROTOCOL_HPP_
 #define _EMBDB_I_PROTOCOL_HPP_
 
+#include <memory>
 #include <sstream>
 #include <string>
 

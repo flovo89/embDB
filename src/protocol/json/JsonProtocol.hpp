@@ -48,14 +48,15 @@ class JsonProtocol : public IProtocol {
   std::string m_data;
 
   const std::string c_command = "command";
-  const std::string c_command_clearall = "clearAll";
-  const std::string c_command_readrow = "readRow";
-  const std::string c_command_readrowtimestamped = "readRowTimestamped";
-  const std::string c_command_createrow = "createRow";
-  const std::string c_command_deleterow = "deleteRow";
-  const std::string c_command_rowexists = "rowExists";
-  const std::string c_command_rowcount = "rowCount";
-  const std::string c_command_writeitem = "writeItem";
+  const std::string c_command_clearallcircular = "clearAllCircular";
+  const std::string c_command_readcircularrow = "readCircularRow";
+  const std::string c_command_readcircularrowtimestamped =
+      "readCircularRowTimestamped";
+  const std::string c_command_createcircularrow = "createCircularRow";
+  const std::string c_command_deletecircularrow = "deleteCircularRow";
+  const std::string c_command_circularrowexists = "circularRowExists";
+  const std::string c_command_circularrowcount = "circularRowCount";
+  const std::string c_command_writeitemcircular = "writeItemCircular";
 
   const std::string c_name = "name";
 

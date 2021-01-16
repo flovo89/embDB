@@ -19,7 +19,7 @@
 #include "ProtocolProcessor.hpp"
 
 #include "../database/DbElementType.hpp"
-#include "../database/IDataBase.hpp"
+#include "../database/IDataBaseCircular.hpp"
 #include "../exception/Exception.hpp"
 #include "IProtocol.hpp"
 
