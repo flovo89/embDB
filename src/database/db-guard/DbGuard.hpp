@@ -21,21 +21,26 @@
 #include "../../utilities/IMutex.hpp"
 #include "../IDataBaseCircular.hpp"
 #include "../db-layout/DbLayoutCircular.hpp"
+#include "../db-layout/DbLayoutLinear.hpp"
 
 namespace embDB_database {
 
-class DbGuard : public IDataBaseCircular {
+class DbGuard : public IDataBaseCircular, public IDataBaseLinear {
  public:
-  DbGuard(std::unique_ptr<IDataBaseCircular> layout,
+  DbGuard(std::unique_ptr<IDataBaseCircular> circular,
+          std::unique_ptr<IDataBaseLinear> linear,
           std::unique_ptr<embDB_utilities::IMutex> mutex);
   virtual ~DbGuard();
 
-  // IDataBaseCircular
-  virtual DbErrorCode deserialize() override;
+  // IDataBase
+  virtual int init() override;
+  virtual int deinit() override;
   virtual DbErrorCode serialize() override;
   virtual DbErrorCode clearAll() override;
 
-  virtual DbErrorCode getVersion(uint32_t& version) override;
+  // IDataBaseCircular
+  virtual DbErrorCode getVersionCircular(uint32_t& version) override;
+
   virtual DbErrorCode getRowCount(uint32_t& count) override;
 
   virtual DbErrorCode createRow(std::string name, DbElementType type,
@@ -43,16 +48,27 @@ class DbGuard : public IDataBaseCircular {
   virtual DbErrorCode rowExists(std::string name, bool& exists) override;
   virtual DbErrorCode deleteRow(std::string name) override;
 
-  virtual DbErrorCode getAllItems(std::string name,
-                                  std::list<DbElement>& elements) override;
-  virtual DbErrorCode getItemsBetween(std::string name, int64_t start,
-                                      int64_t end,
-                                      std::list<DbElement>& elements) override;
-  virtual DbErrorCode addItem(std::string name,
-                              const DbElement& element) override;
+  virtual DbErrorCode getAllItemsCircular(
+      std::string name, std::list<DbElement>& elements) override;
+  virtual DbErrorCode getItemsBetweenCircular(
+      std::string name, int64_t start, int64_t end,
+      std::list<DbElement>& elements) override;
+  virtual DbErrorCode addItemCircular(std::string name,
+                                      const DbElement& element) override;
+
+  // IDataBaseLinear
+  virtual DbErrorCode getVersionLinear(uint32_t& version) override;
+  virtual DbErrorCode getAllItemsLinear(
+      std::string name, std::list<DbElement>& elements) override;
+  virtual DbErrorCode getItemsBetweenLinear(
+      std::string name, int64_t start, int64_t end,
+      std::list<DbElement>& elements) override;
+  virtual DbErrorCode addItemLinear(std::string name,
+                                    const DbElement& element) override;
 
  private:
-  std::unique_ptr<IDataBaseCircular> m_layout;
+  std::unique_ptr<IDataBaseCircular> m_circular;
+  std::unique_ptr<IDataBaseLinear> m_linear;
   std::unique_ptr<embDB_utilities::IMutex> m_mutex;
 };
 

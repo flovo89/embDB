@@ -21,25 +21,40 @@
 namespace embDB_database {
 
 //--------------------------------------------------------------------------------------------
-DbGuard::DbGuard(std::unique_ptr<IDataBaseCircular> layout,
+DbGuard::DbGuard(std::unique_ptr<IDataBaseCircular> circular,
+                 std::unique_ptr<IDataBaseLinear> linear,
                  std::unique_ptr<embDB_utilities::IMutex> mutex)
-    : m_layout(std::move(layout)), m_mutex(std::move(mutex)) {}
+    : m_circular(std::move(circular)),
+      m_linear(std::move(linear)),
+      m_mutex(std::move(mutex)) {}
 
 //--------------------------------------------------------------------------------------------
 DbGuard::~DbGuard() {}
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbGuard::deserialize() {
+int DbGuard::init() {
   m_mutex->lock();
-  DbErrorCode err = m_layout->deserialize();
+  int ret = m_circular->init();
+  ret += m_linear->init();
   m_mutex->unlock();
-  return err;
+  return ret;
+}
+
+//--------------------------------------------------------------------------------------------
+int DbGuard::deinit() {
+  m_mutex->lock();
+  int ret = m_circular->deinit();
+  ret += m_linear->deinit();
+  m_mutex->unlock();
+  return ret;
 }
 
 //--------------------------------------------------------------------------------------------
 DbErrorCode DbGuard::serialize() {
   m_mutex->lock();
-  DbErrorCode err = m_layout->serialize();
+  DbErrorCode err = m_circular->serialize();
+  if (err != DbErrorCode::SUCCESS) return err;
+  err = m_linear->serialize();
   m_mutex->unlock();
   return err;
 }
@@ -47,15 +62,17 @@ DbErrorCode DbGuard::serialize() {
 //--------------------------------------------------------------------------------------------
 DbErrorCode DbGuard::clearAll() {
   m_mutex->lock();
-  DbErrorCode err = m_layout->clearAll();
+  DbErrorCode err = m_circular->clearAll();
+  if (err != DbErrorCode::SUCCESS) return err;
+  err = m_linear->clearAll();
   m_mutex->unlock();
   return err;
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbGuard::getVersion(uint32_t& version) {
+DbErrorCode DbGuard::getVersionCircular(uint32_t& version) {
   m_mutex->lock();
-  DbErrorCode err = m_layout->getVersion(version);
+  DbErrorCode err = m_circular->getVersionCircular(version);
   m_mutex->unlock();
   return err;
 }
@@ -63,7 +80,7 @@ DbErrorCode DbGuard::getVersion(uint32_t& version) {
 //--------------------------------------------------------------------------------------------
 DbErrorCode DbGuard::getRowCount(uint32_t& count) {
   m_mutex->lock();
-  DbErrorCode err = m_layout->getRowCount(count);
+  DbErrorCode err = m_circular->getRowCount(count);
   m_mutex->unlock();
   return err;
 }
@@ -72,7 +89,7 @@ DbErrorCode DbGuard::getRowCount(uint32_t& count) {
 DbErrorCode DbGuard::createRow(std::string name, DbElementType type,
                                uint32_t maxItems) {
   m_mutex->lock();
-  DbErrorCode err = m_layout->createRow(name, type, maxItems);
+  DbErrorCode err = m_circular->createRow(name, type, maxItems);
   m_mutex->unlock();
   return err;
 }
@@ -80,7 +97,7 @@ DbErrorCode DbGuard::createRow(std::string name, DbElementType type,
 //--------------------------------------------------------------------------------------------
 DbErrorCode DbGuard::rowExists(std::string name, bool& exists) {
   m_mutex->lock();
-  DbErrorCode err = m_layout->rowExists(name, exists);
+  DbErrorCode err = m_circular->rowExists(name, exists);
   m_mutex->unlock();
   return err;
 }
@@ -88,34 +105,71 @@ DbErrorCode DbGuard::rowExists(std::string name, bool& exists) {
 //--------------------------------------------------------------------------------------------
 DbErrorCode DbGuard::deleteRow(std::string name) {
   m_mutex->lock();
-  DbErrorCode err = m_layout->deleteRow(name);
+  DbErrorCode err = m_circular->deleteRow(name);
   m_mutex->unlock();
   return err;
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbGuard::getAllItems(std::string name,
-                                 std::list<DbElement>& elements) {
+DbErrorCode DbGuard::getAllItemsCircular(std::string name,
+                                         std::list<DbElement>& elements) {
   m_mutex->lock();
-  DbErrorCode err = m_layout->getAllItems(name, elements);
+  DbErrorCode err = m_circular->getAllItemsCircular(name, elements);
   m_mutex->unlock();
   return err;
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbGuard::getItemsBetween(std::string name, int64_t start,
-                                     int64_t end,
-                                     std::list<DbElement>& elements) {
+DbErrorCode DbGuard::getItemsBetweenCircular(std::string name, int64_t start,
+                                             int64_t end,
+                                             std::list<DbElement>& elements) {
   m_mutex->lock();
-  DbErrorCode err = m_layout->getItemsBetween(name, start, end, elements);
+  DbErrorCode err =
+      m_circular->getItemsBetweenCircular(name, start, end, elements);
   m_mutex->unlock();
   return err;
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbGuard::addItem(std::string name, const DbElement& element) {
+DbErrorCode DbGuard::addItemCircular(std::string name,
+                                     const DbElement& element) {
   m_mutex->lock();
-  DbErrorCode err = m_layout->addItem(name, element);
+  DbErrorCode err = m_circular->addItemCircular(name, element);
+  m_mutex->unlock();
+  return err;
+}
+
+//--------------------------------------------------------------------------------------------
+DbErrorCode DbGuard::getVersionLinear(uint32_t& version) {
+  m_mutex->lock();
+  DbErrorCode err = m_linear->getVersionLinear(version);
+  m_mutex->unlock();
+  return err;
+}
+
+//--------------------------------------------------------------------------------------------
+DbErrorCode DbGuard::getAllItemsLinear(std::string name,
+                                       std::list<DbElement>& elements) {
+  m_mutex->lock();
+  DbErrorCode err = m_linear->getAllItemsLinear(name, elements);
+  m_mutex->unlock();
+  return err;
+}
+
+//--------------------------------------------------------------------------------------------
+DbErrorCode DbGuard::getItemsBetweenLinear(std::string name, int64_t start,
+                                           int64_t end,
+                                           std::list<DbElement>& elements) {
+  m_mutex->lock();
+  DbErrorCode err = m_linear->getItemsBetweenLinear(name, start, end, elements);
+  m_mutex->unlock();
+  return err;
+}
+
+//--------------------------------------------------------------------------------------------
+DbErrorCode DbGuard::addItemLinear(std::string name, const DbElement& element) {
+  m_mutex->lock();
+  DbErrorCode err = m_linear->addItemLinear(name, element);
   m_mutex->unlock();
   return err;
 }

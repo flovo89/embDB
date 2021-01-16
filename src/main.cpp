@@ -25,6 +25,7 @@
 
 #include "database/db-guard/DbGuard.hpp"
 #include "database/db-layout/DbLayoutCircular.hpp"
+#include "database/db-layout/DbLayoutLinear.hpp"
 #include "eventloop/EventLoopBreakerOnSignal.hpp"
 #include "eventloop/EventLoopFactory.hpp"
 #include "file-io/FileReader.hpp"
@@ -47,14 +48,15 @@
 static const std::string DEFAULT_LOG_FILE = "/etc/embdb/logging.ini";
 static const std::string DEFAULT_PID_FILE = "/var/run/embdb.pid";
 static const std::string DEFAULT_SOCKET_PATH = "/var/run/embdb.sock";
-static const std::string DATABASE_FILE_PATH = "/var/data/sd/database/embdb";
+static const std::string DATABASE_CIRCULAR_FILE_PATH =
+    "/var/data/sd/database/embdb-circular";
 static const int DEFAULT_TCP_PORT = 8085;
 
 /* Locals */
 std::string logConfig = DEFAULT_LOG_FILE;
 std::string pidFile = DEFAULT_PID_FILE;
 std::string socketPath = DEFAULT_SOCKET_PATH;
-std::string databasePath = DATABASE_FILE_PATH;
+std::string databaseCircularPath = DATABASE_CIRCULAR_FILE_PATH;
 bool isDaemonize = false;
 int tcpport = DEFAULT_TCP_PORT;
 
@@ -72,8 +74,8 @@ void usage(const char* progname) {
             << std::endl
             << " -s | --socket       Path to socket (" << DEFAULT_SOCKET_PATH
             << ")" << std::endl
-            << " -f | --file         Path to database file ("
-            << DATABASE_FILE_PATH << ")" << std::endl
+            << " -f | --filecircular Path to database file ("
+            << DATABASE_CIRCULAR_FILE_PATH << ")" << std::endl
             << " -t | --tcpport      Tcp socket port (" << DEFAULT_TCP_PORT
             << ")" << std::endl;
 }
@@ -104,7 +106,7 @@ bool parseArgs(int argc, char* argv[], int& retCode) {
       {"daemonize", no_argument, NULL, 'd'},
       {"pidfile", required_argument, NULL, 'p'},
       {"socket", required_argument, NULL, 's'},
-      {"file", required_argument, NULL, 'f'},
+      {"filecircular", required_argument, NULL, 'f'},
       {"tcpport", required_argument, NULL, 't'},
       {0, 0, 0, 0}};
   int option_index = 0;
@@ -139,7 +141,7 @@ bool parseArgs(int argc, char* argv[], int& retCode) {
         socketPath = optarg;
         break;
       case 'f':
-        databasePath = optarg;
+        databaseCircularPath = optarg;
         break;
       case 't':
         tcpport = atoi(optarg);
@@ -157,28 +159,38 @@ bool parseArgs(int argc, char* argv[], int& retCode) {
 //--------------------------------------------------------------------------------------------
 void buildDatabaseGuard(std::unique_ptr<embDB_database::DbGuard>& guard) {
   std::unique_ptr<embDB_fileio::FileReader> filereader(
-      new embDB_fileio::FileReader(databasePath));
+      new embDB_fileio::FileReader(databaseCircularPath));
   std::unique_ptr<embDB_fileio::FileWriter> filewriter(
-      new embDB_fileio::FileWriter(databasePath));
+      new embDB_fileio::FileWriter(databaseCircularPath));
   std::unique_ptr<embDB_utilities::IHasher> hasher(
       new embDB_utilities::DefaultHasher());
   std::unique_ptr<embDB_utilities::ITimestamper> timestamper(
       new embDB_utilities::DefaultTimestamper());
 
-  std::unique_ptr<embDB_database::IDataBaseCircular> layout(
+  std::unique_ptr<embDB_database::IDataBaseCircular> circular(
       new embDB_database::DbLayoutCircular(
           std::move(filereader), std::move(filewriter), std::move(hasher),
           std::move(timestamper)));
 
+  std::unique_ptr<embDB_utilities::IHasher> hasher2(
+      new embDB_utilities::DefaultHasher());
+  std::unique_ptr<embDB_utilities::ITimestamper> timestamper2(
+      new embDB_utilities::DefaultTimestamper());
+
+  std::unique_ptr<embDB_database::IDataBaseLinear> linear(
+      new embDB_database::DbLayoutLinear(std::move(hasher2),
+                                         std::move(timestamper2)));
+
   std::unique_ptr<embDB_utilities::IMutex> mutex(
       new embDB_utilities::DefaultMutex());
-  guard.reset(new embDB_database::DbGuard(std::move(layout), std::move(mutex)));
+  guard.reset(new embDB_database::DbGuard(std::move(circular),
+                                          std::move(linear), std::move(mutex)));
 }
 
 //--------------------------------------------------------------------------------------------
-int deserializeDatabase(std::unique_ptr<embDB_database::DbGuard>& guard) {
-  if (guard->deserialize() != embDB_database::DbErrorCode::SUCCESS) {
-    LOG_WA() << "Database could not be deserialized, so clear it all!";
+int initDatabase(std::unique_ptr<embDB_database::DbGuard>& guard) {
+  if (guard->init()) {
+    LOG_WA() << "Database could not be initialized, so clear it all!";
     if (guard->clearAll() != embDB_database::DbErrorCode::SUCCESS) {
       LOG_ER() << "Database could not be cleared, FATAL";
       return -1;
@@ -258,7 +270,7 @@ int main(int argc, char* argv[]) {
   buildDatabaseGuard(guard);
 
   // Init database
-  if (deserializeDatabase(guard)) return -1;
+  if (initDatabase(guard)) return -1;
 
   // Build protocolprocessor
   std::unique_ptr<embDB_protocol::ProtocolProcessor> processor;
@@ -301,7 +313,7 @@ int main(int argc, char* argv[]) {
   // Cleanup
   unixsocketserver->close();
   tcpsocketserver->close();
-  guard->serialize();
+  guard->deinit();
   google::protobuf::ShutdownProtobufLibrary();
   if (isDaemonize) daemonizer.removePidFile();
 

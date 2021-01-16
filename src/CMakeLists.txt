@@ -2,8 +2,11 @@
 set(APP_SOURCES
   ${PROJECT_SOURCE_DIR}/embdb-layout/cpp/embdb-layout.pb.cc
   database/db-element/DbElement.cpp
+  database/IDataBase.cpp
   database/IDataBaseCircular.cpp
+  database/IDataBaseLinear.cpp
   database/db-layout/DbLayoutCircular.cpp
+  database/db-layout/DbLayoutLinear.cpp
   database/db-guard/DbGuard.cpp
   file-io/FileReader.cpp
   file-io/FileWriter.cpp

@@ -59,13 +59,13 @@ void ProtocolProcessor::processData(DataObject& obj) {
   switch (obj.getCommand()) {
     case ProtocolCommand::READ_ROW: {
       std::list<embDB_database::DbElement> elements;
-      obj.setErrorCode(m_guard.getAllItems(obj.getName(), elements));
+      obj.setErrorCode(m_guard.getAllItemsCircular(obj.getName(), elements));
       obj.setDbElements(elements);
       break;
     }
     case ProtocolCommand::READ_ROW_TIMESTAMPED: {
       std::list<embDB_database::DbElement> elements;
-      obj.setErrorCode(m_guard.getItemsBetween(
+      obj.setErrorCode(m_guard.getItemsBetweenCircular(
           obj.getName(), obj.getStartTime(), obj.getEndTime(), elements));
       obj.setDbElements(elements);
       break;
@@ -96,7 +96,8 @@ void ProtocolProcessor::processData(DataObject& obj) {
       break;
     }
     case ProtocolCommand::WRITE_ITEM: {
-      obj.setErrorCode(m_guard.addItem(obj.getName(), obj.getDbElement()));
+      obj.setErrorCode(
+          m_guard.addItemCircular(obj.getName(), obj.getDbElement()));
       break;
     }
     default: {

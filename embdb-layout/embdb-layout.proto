@@ -50,7 +50,26 @@ message DataLayoutCircular {
 }
 
 // ---- Used for linear db ----
+message BlobInfo {
+  int32 index = 1;
+  int64 starttime = 2;
+  int64 endtime = 3;
+  int32 prevIndex = 4;
+  int32 nextIndex = 5;
+  uint32 itemsCount = 6;
+  uint32 serializedSize = 7;
+  repeated string names = 8;
+}
 
 // ---- Used for linear db ----
+message ControlLinear {
+  Header header = 1;
+  int32 curIndex = 2;
+  repeated BlobInfo blobInfos = 3;
+}
 
+// ---- Used for linear db ----
+message BlobLinear {
+  repeated DataItem items = 1;
+}
 

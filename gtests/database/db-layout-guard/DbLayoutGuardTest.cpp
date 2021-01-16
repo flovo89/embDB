@@ -35,26 +35,34 @@ namespace gtests {
 class DbLayoutGuardTest : public testing::Test {
  protected:
   void SetUp() override {
-    _hasher.reset(new embDB_utilities::DefaultHasher());
-    _timestamper.reset(new embDB_utilities::DefaultTimestamper());
+    _hasher1.reset(new embDB_utilities::DefaultHasher());
+    _timestamper1.reset(new embDB_utilities::DefaultTimestamper());
     _fileReader.reset(new embDB_fileio::FileReader("testdatabase.protobuf"));
     _fileWriter.reset(new embDB_fileio::FileWriter("testdatabase.protobuf"));
+    _hasher2.reset(new embDB_utilities::DefaultHasher());
+    _timestamper2.reset(new embDB_utilities::DefaultTimestamper());
 
-    _layout.reset(
+    _circular.reset(
         new DbLayoutCircular(std::move(_fileReader), std::move(_fileWriter),
-                             std::move(_hasher), std::move(_timestamper)));
+                             std::move(_hasher1), std::move(_timestamper1)));
+    _linear.reset(
+        new DbLayoutLinear(std::move(_hasher2), std::move(_timestamper2)));
     _mutex.reset(new embDB_utilities::DefaultMutex());
 
-    _guard.reset(new DbGuard(std::move(_layout), std::move(_mutex)));
+    _guard.reset(new DbGuard(std::move(_circular), std::move(_linear),
+                             std::move(_mutex)));
   }
   void TearDown() override {}
 
-  std::unique_ptr<embDB_utilities::IHasher> _hasher;
-  std::unique_ptr<embDB_utilities::ITimestamper> _timestamper;
+  std::unique_ptr<embDB_utilities::IHasher> _hasher1;
+  std::unique_ptr<embDB_utilities::ITimestamper> _timestamper1;
   std::unique_ptr<embDB_fileio::FileReader> _fileReader;
   std::unique_ptr<embDB_fileio::FileWriter> _fileWriter;
+  std::unique_ptr<embDB_utilities::IHasher> _hasher2;
+  std::unique_ptr<embDB_utilities::ITimestamper> _timestamper2;
 
-  std::unique_ptr<DbLayoutCircular> _layout;
+  std::unique_ptr<DbLayoutCircular> _circular;
+  std::unique_ptr<DbLayoutLinear> _linear;
   std::unique_ptr<embDB_utilities::IMutex> _mutex;
 
   std::unique_ptr<DbGuard> _guard;
@@ -63,7 +71,7 @@ class DbLayoutGuardTest : public testing::Test {
 //--------------------------------------------------------------------------------------------
 TEST_F(DbLayoutGuardTest, serializationDeserialization) {
   EXPECT_EQ(_guard->serialize(), DbErrorCode::SUCCESS);
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->init(), 0);
 }
 
 //--------------------------------------------------------------------------------------------
@@ -75,24 +83,25 @@ TEST_F(DbLayoutGuardTest, clearAllRowCount) {
 }
 
 //--------------------------------------------------------------------------------------------
-TEST_F(DbLayoutGuardTest, getVersion) {
+TEST_F(DbLayoutGuardTest, getVersionCircular) {
   uint32_t version;
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
-  EXPECT_EQ(_guard->getVersion(version), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->init(), 0);
+  EXPECT_EQ(_guard->getVersionCircular(version), DbErrorCode::SUCCESS);
   EXPECT_EQ(version, 1);
 }
 
 //--------------------------------------------------------------------------------------------
 TEST_F(DbLayoutGuardTest, getUnknownRowItems) {
   std::list<DbElement> elements;
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
-  EXPECT_EQ(_guard->getAllItems("unknown", elements), DbErrorCode::NOTFOUND);
+  EXPECT_EQ(_guard->init(), 0);
+  EXPECT_EQ(_guard->getAllItemsCircular("unknown", elements),
+            DbErrorCode::NOTFOUND);
 }
 
 //--------------------------------------------------------------------------------------------
 TEST_F(DbLayoutGuardTest, getRowCount) {
   uint32_t count;
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->init(), 0);
   EXPECT_EQ(_guard->createRow("rowname", DbElementType::STRING, 10),
             DbErrorCode::SUCCESS);
   EXPECT_EQ(_guard->createRow("RowName", DbElementType::STRING, 10),
@@ -103,16 +112,17 @@ TEST_F(DbLayoutGuardTest, getRowCount) {
 
 //--------------------------------------------------------------------------------------------
 TEST_F(DbLayoutGuardTest, addToUnknownRow) {
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
-  EXPECT_EQ(_guard->addItem("unknown", DbElement(1234)), DbErrorCode::NOTFOUND);
+  EXPECT_EQ(_guard->init(), 0);
+  EXPECT_EQ(_guard->addItemCircular("unknown", DbElement(1234)),
+            DbErrorCode::NOTFOUND);
 }
 
 //--------------------------------------------------------------------------------------------
 TEST_F(DbLayoutGuardTest, addWrongType) {
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->init(), 0);
   EXPECT_EQ(_guard->createRow("rowName", DbElementType::STRING, 10),
             DbErrorCode::SUCCESS);
-  EXPECT_EQ(_guard->addItem("rowName", DbElement(1234)),
+  EXPECT_EQ(_guard->addItemCircular("rowName", DbElement(1234)),
             DbErrorCode::TYPEMISMATCH);
 }
 
@@ -123,21 +133,23 @@ TEST_F(DbLayoutGuardTest, testString) {
   std::list<DbElement> elements;
   bool exists;
 
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->init(), 0);
   EXPECT_EQ(_guard->createRow(rowName, DbElementType::STRING, 100),
             DbErrorCode::SUCCESS);
   EXPECT_EQ(_guard->rowExists(rowName, exists), DbErrorCode::SUCCESS);
   EXPECT_TRUE(exists);
 
-  EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+            DbErrorCode::SUCCESS);
   EXPECT_EQ(elements.size(), 0);
 
   for (int i = 0; i < 150; i++) {
     std::stringstream ss;
     ss << elValue << i;
     DbElement el(ss.str());
-    EXPECT_EQ(_guard->addItem(rowName, el), DbErrorCode::SUCCESS);
-    EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->addItemCircular(rowName, el), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+              DbErrorCode::SUCCESS);
     EXPECT_EQ(elements.size(), ((i + 1) > 100 ? 100 : (i + 1)));
     EXPECT_EQ(elements.back().toString(), ss.str());
   }
@@ -161,19 +173,21 @@ TEST_F(DbLayoutGuardTest, testUint32) {
   std::list<DbElement> elements;
   bool exists;
 
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->init(), 0);
   EXPECT_EQ(_guard->createRow(rowName, DbElementType::UINT32, 100),
             DbErrorCode::SUCCESS);
   EXPECT_EQ(_guard->rowExists(rowName, exists), DbErrorCode::SUCCESS);
   EXPECT_TRUE(exists);
 
-  EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+            DbErrorCode::SUCCESS);
   EXPECT_EQ(elements.size(), 0);
 
   for (uint32_t i = 0; i < 150; i++) {
     DbElement el(i);
-    EXPECT_EQ(_guard->addItem(rowName, el), DbErrorCode::SUCCESS);
-    EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->addItemCircular(rowName, el), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+              DbErrorCode::SUCCESS);
     EXPECT_EQ(elements.size(), ((i + 1) > 100 ? 100 : (i + 1)));
     EXPECT_EQ(elements.back().toUint32(), i);
   }
@@ -195,19 +209,21 @@ TEST_F(DbLayoutGuardTest, testInt32) {
   std::list<DbElement> elements;
   bool exists;
 
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->init(), 0);
   EXPECT_EQ(_guard->createRow(rowName, DbElementType::INT32, 100),
             DbErrorCode::SUCCESS);
   EXPECT_EQ(_guard->rowExists(rowName, exists), DbErrorCode::SUCCESS);
   EXPECT_TRUE(exists);
 
-  EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+            DbErrorCode::SUCCESS);
   EXPECT_EQ(elements.size(), 0);
 
   for (int32_t i = 0; i < 150; i++) {
     DbElement el(i);
-    EXPECT_EQ(_guard->addItem(rowName, el), DbErrorCode::SUCCESS);
-    EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->addItemCircular(rowName, el), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+              DbErrorCode::SUCCESS);
     EXPECT_EQ(elements.size(), ((i + 1) > 100 ? 100 : (i + 1)));
     EXPECT_EQ(elements.back().toInt32(), i);
   }
@@ -229,19 +245,21 @@ TEST_F(DbLayoutGuardTest, testUint64) {
   std::list<DbElement> elements;
   bool exists;
 
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->init(), 0);
   EXPECT_EQ(_guard->createRow(rowName, DbElementType::UINT64, 100),
             DbErrorCode::SUCCESS);
   EXPECT_EQ(_guard->rowExists(rowName, exists), DbErrorCode::SUCCESS);
   EXPECT_TRUE(exists);
 
-  EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+            DbErrorCode::SUCCESS);
   EXPECT_EQ(elements.size(), 0);
 
   for (uint64_t i = 0; i < 150; i++) {
     DbElement el(i);
-    EXPECT_EQ(_guard->addItem(rowName, el), DbErrorCode::SUCCESS);
-    EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->addItemCircular(rowName, el), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+              DbErrorCode::SUCCESS);
     EXPECT_EQ(elements.size(), ((i + 1) > 100 ? 100 : (i + 1)));
     EXPECT_EQ(elements.back().toUint64(), i);
   }
@@ -263,19 +281,21 @@ TEST_F(DbLayoutGuardTest, testInt64) {
   std::list<DbElement> elements;
   bool exists;
 
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->init(), 0);
   EXPECT_EQ(_guard->createRow(rowName, DbElementType::INT64, 100),
             DbErrorCode::SUCCESS);
   EXPECT_EQ(_guard->rowExists(rowName, exists), DbErrorCode::SUCCESS);
   EXPECT_TRUE(exists);
 
-  EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+            DbErrorCode::SUCCESS);
   EXPECT_EQ(elements.size(), 0);
 
   for (int64_t i = 0; i < 150; i++) {
     DbElement el(i);
-    EXPECT_EQ(_guard->addItem(rowName, el), DbErrorCode::SUCCESS);
-    EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->addItemCircular(rowName, el), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+              DbErrorCode::SUCCESS);
     EXPECT_EQ(elements.size(), ((i + 1) > 100 ? 100 : (i + 1)));
     EXPECT_EQ(elements.back().toInt64(), i);
   }
@@ -297,19 +317,21 @@ TEST_F(DbLayoutGuardTest, testFloat) {
   std::list<DbElement> elements;
   bool exists;
 
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->init(), 0);
   EXPECT_EQ(_guard->createRow(rowName, DbElementType::FLOAT, 100),
             DbErrorCode::SUCCESS);
   EXPECT_EQ(_guard->rowExists(rowName, exists), DbErrorCode::SUCCESS);
   EXPECT_TRUE(exists);
 
-  EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+            DbErrorCode::SUCCESS);
   EXPECT_EQ(elements.size(), 0);
 
   for (float i = 0; i < 150; i = i + 1) {
     DbElement el(i);
-    EXPECT_EQ(_guard->addItem(rowName, el), DbErrorCode::SUCCESS);
-    EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->addItemCircular(rowName, el), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+              DbErrorCode::SUCCESS);
     EXPECT_EQ(elements.size(), ((i + 1) > 100 ? 100 : (i + 1)));
     EXPECT_EQ(elements.back().toFloat(), i);
   }
@@ -331,19 +353,21 @@ TEST_F(DbLayoutGuardTest, testDouble) {
   std::list<DbElement> elements;
   bool exists;
 
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->init(), 0);
   EXPECT_EQ(_guard->createRow(rowName, DbElementType::DOUBLE, 100),
             DbErrorCode::SUCCESS);
   EXPECT_EQ(_guard->rowExists(rowName, exists), DbErrorCode::SUCCESS);
   EXPECT_TRUE(exists);
 
-  EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+            DbErrorCode::SUCCESS);
   EXPECT_EQ(elements.size(), 0);
 
   for (double i = 0; i < 150; i = i + 1) {
     DbElement el(i);
-    EXPECT_EQ(_guard->addItem(rowName, el), DbErrorCode::SUCCESS);
-    EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->addItemCircular(rowName, el), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+              DbErrorCode::SUCCESS);
     EXPECT_EQ(elements.size(), ((i + 1) > 100 ? 100 : (i + 1)));
     EXPECT_EQ(elements.back().toDouble(), i);
   }
@@ -366,19 +390,21 @@ TEST_F(DbLayoutGuardTest, testBool) {
   bool exists;
   bool toggle = true;
 
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->init(), 0);
   EXPECT_EQ(_guard->createRow(rowName, DbElementType::BOOL, 10),
             DbErrorCode::SUCCESS);
   EXPECT_EQ(_guard->rowExists(rowName, exists), DbErrorCode::SUCCESS);
   EXPECT_TRUE(exists);
 
-  EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+            DbErrorCode::SUCCESS);
   EXPECT_EQ(elements.size(), 0);
 
   for (int i = 0; i < 15; i = i + 1) {
     DbElement el(toggle);
-    EXPECT_EQ(_guard->addItem(rowName, el), DbErrorCode::SUCCESS);
-    EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->addItemCircular(rowName, el), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+              DbErrorCode::SUCCESS);
     EXPECT_EQ(elements.size(), ((i + 1) > 10 ? 10 : (i + 1)));
     EXPECT_EQ(elements.back().toBool(), toggle);
     toggle = !toggle;
@@ -402,21 +428,23 @@ TEST_F(DbLayoutGuardTest, testBytes) {
   std::list<DbElement> elements;
   bool exists;
 
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->init(), 0);
   EXPECT_EQ(_guard->createRow(rowName, DbElementType::BYTES, 200),
             DbErrorCode::SUCCESS);
   EXPECT_EQ(_guard->rowExists(rowName, exists), DbErrorCode::SUCCESS);
   EXPECT_TRUE(exists);
 
-  EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+            DbErrorCode::SUCCESS);
   EXPECT_EQ(elements.size(), 0);
 
   for (uint8_t i = 0; i < 250; i++) {
     std::vector<uint8_t> vec({i, (uint8_t)(i + 1), (uint8_t)(i + 2),
                               (uint8_t)(i + 3), (uint8_t)(i + 4)});
     DbElement el(vec);
-    EXPECT_EQ(_guard->addItem(rowName, el), DbErrorCode::SUCCESS);
-    EXPECT_EQ(_guard->getAllItems(rowName, elements), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->addItemCircular(rowName, el), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->getAllItemsCircular(rowName, elements),
+              DbErrorCode::SUCCESS);
     EXPECT_EQ(elements.size(), ((i + 1) > 200 ? 200 : (i + 1)));
     EXPECT_EQ(elements.back().toBytes()[0], vec[0]);
   }
@@ -433,23 +461,23 @@ TEST_F(DbLayoutGuardTest, testBytes) {
 }
 
 //--------------------------------------------------------------------------------------------
-TEST_F(DbLayoutGuardTest, getItemsBetweenUint64) {
+TEST_F(DbLayoutGuardTest, getItemsBetweenCircularUint64) {
   std::string rowName = "whatever";
   std::list<DbElement> elements;
   int64_t start = 0;
   int64_t end = 0x7FFFFFFFFFFFFFFF;
 
-  EXPECT_EQ(_guard->deserialize(), DbErrorCode::SUCCESS);
+  EXPECT_EQ(_guard->init(), 0);
   EXPECT_EQ(_guard->createRow(rowName, DbElementType::UINT64, 100),
             DbErrorCode::SUCCESS);
 
   for (uint64_t i = 0; i < 100; i++) {
     DbElement el(i);
-    EXPECT_EQ(_guard->addItem(rowName, el), DbErrorCode::SUCCESS);
+    EXPECT_EQ(_guard->addItemCircular(rowName, el), DbErrorCode::SUCCESS);
     ::usleep(2000);
   }
 
-  EXPECT_EQ(_guard->getItemsBetween(rowName, start, end, elements),
+  EXPECT_EQ(_guard->getItemsBetweenCircular(rowName, start, end, elements),
             DbErrorCode::SUCCESS);
   EXPECT_EQ(elements.size(), 100);
 
@@ -461,7 +489,7 @@ TEST_F(DbLayoutGuardTest, getItemsBetweenUint64) {
       end = e.getTimestamp();
     index++;
   }
-  EXPECT_EQ(_guard->getItemsBetween(rowName, start, end, elements),
+  EXPECT_EQ(_guard->getItemsBetweenCircular(rowName, start, end, elements),
             DbErrorCode::SUCCESS);
   EXPECT_EQ(elements.size(), 20);
 }

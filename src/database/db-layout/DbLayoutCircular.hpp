@@ -18,6 +18,7 @@
 #ifndef _EMBDB_DB_LAYOUT_CIRCULAR_HPP_
 #define _EMBDB_DB_LAYOUT_CIRCULAR_HPP_
 
+#include "../../../embdb-layout/cpp/embdb-layout.pb.h"
 #include "../../file-io/FileReader.hpp"
 #include "../../file-io/FileWriter.hpp"
 #include "../../utilities/IHasher.hpp"
@@ -41,11 +42,14 @@ class DbLayoutCircular : public IDataBaseCircular {
 
  private:
   // IDataBase
-  virtual DbErrorCode deserialize() override;
+  virtual int init() override;
+  virtual int deinit() override;
   virtual DbErrorCode serialize() override;
   virtual DbErrorCode clearAll() override;
 
-  virtual DbErrorCode getVersion(uint32_t& version) override;
+  // IDataBaseCircular
+  virtual DbErrorCode getVersionCircular(uint32_t& version) override;
+
   virtual DbErrorCode getRowCount(uint32_t& count) override;
 
   virtual DbErrorCode createRow(std::string name, DbElementType type,
@@ -53,13 +57,13 @@ class DbLayoutCircular : public IDataBaseCircular {
   virtual DbErrorCode rowExists(std::string name, bool& exists) override;
   virtual DbErrorCode deleteRow(std::string name) override;
 
-  virtual DbErrorCode getAllItems(std::string name,
-                                  std::list<DbElement>& elements) override;
-  virtual DbErrorCode getItemsBetween(std::string name, int64_t start,
-                                      int64_t end,
-                                      std::list<DbElement>& elements) override;
-  virtual DbErrorCode addItem(std::string name,
-                              const DbElement& element) override;
+  virtual DbErrorCode getAllItemsCircular(
+      std::string name, std::list<DbElement>& elements) override;
+  virtual DbErrorCode getItemsBetweenCircular(
+      std::string name, int64_t start, int64_t end,
+      std::list<DbElement>& elements) override;
+  virtual DbErrorCode addItemCircular(std::string name,
+                                      const DbElement& element) override;
 
   std::unique_ptr<embDB_fileio::FileReader> m_reader;
   std::unique_ptr<embDB_fileio::FileWriter> m_writer;
@@ -82,7 +86,8 @@ class DbLayoutCircular : public IDataBaseCircular {
   void setCurItem(DataRowCircular* row, uint32_t curItem);
   void getDataItems(const DataRowCircular& row,
                     RepeatedPtrField<DataItem>& items) const;
-  void getDataItemsMutable(DataRowCircular* row, RepeatedPtrField<DataItem>** items);
+  void getDataItemsMutable(DataRowCircular* row,
+                           RepeatedPtrField<DataItem>** items);
   void getDataElement(DbElementType type, const DataItem* item,
                       DbElement& element);
   void setDataItem(const DbElement& element, DataItem* item);

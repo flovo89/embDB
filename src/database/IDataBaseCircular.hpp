@@ -20,22 +20,19 @@
 
 #include <list>
 
-#include "../../embdb-layout/cpp/embdb-layout.pb.h"
 #include "DbErrorCode.hpp"
+#include "IDataBase.hpp"
 #include "db-element/DbElement.hpp"
 
 namespace embDB_database {
 
-class IDataBaseCircular {
+class IDataBaseCircular : public IDataBase {
  public:
   IDataBaseCircular();
   virtual ~IDataBaseCircular();
 
-  virtual DbErrorCode deserialize() = 0;
-  virtual DbErrorCode serialize() = 0;
-  virtual DbErrorCode clearAll() = 0;
+  virtual DbErrorCode getVersionCircular(uint32_t& version) = 0;
 
-  virtual DbErrorCode getVersion(uint32_t& version) = 0;
   virtual DbErrorCode getRowCount(uint32_t& count) = 0;
 
   virtual DbErrorCode createRow(std::string name, DbElementType type,
@@ -43,12 +40,13 @@ class IDataBaseCircular {
   virtual DbErrorCode rowExists(std::string name, bool& exists) = 0;
   virtual DbErrorCode deleteRow(std::string name) = 0;
 
-  virtual DbErrorCode getAllItems(std::string name,
-                                  std::list<DbElement>& elements) = 0;
-  virtual DbErrorCode getItemsBetween(std::string name, int64_t start,
-                                      int64_t end,
-                                      std::list<DbElement>& elements) = 0;
-  virtual DbErrorCode addItem(std::string name, const DbElement& element) = 0;
+  virtual DbErrorCode getAllItemsCircular(std::string name,
+                                          std::list<DbElement>& elements) = 0;
+  virtual DbErrorCode getItemsBetweenCircular(
+      std::string name, int64_t start, int64_t end,
+      std::list<DbElement>& elements) = 0;
+  virtual DbErrorCode addItemCircular(std::string name,
+                                      const DbElement& element) = 0;
 };
 
 }  // namespace embDB_database

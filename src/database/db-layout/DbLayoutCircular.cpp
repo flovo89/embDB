@@ -38,20 +38,27 @@ DbLayoutCircular::DbLayoutCircular(
 DbLayoutCircular::~DbLayoutCircular() {}
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayoutCircular::deserialize() {
+int DbLayoutCircular::init() {
   // Deserialize from file
   m_reader->open();
   if (!m_dataLayout.ParseFromIstream(m_reader.get())) {
-    return DbErrorCode::INTERNAL;
+    return -1;
   }
   m_reader->close();
 
   m_isDeserialized = true;
 
   uint32_t version;
-  getVersion(version);
+  getVersionCircular(version);
 
-  return DbErrorCode::SUCCESS;
+  return 0;
+}
+
+//--------------------------------------------------------------------------------------------
+int DbLayoutCircular::deinit() {
+  if (serialize() != DbErrorCode::SUCCESS) return -1;
+
+  return 0;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -81,7 +88,7 @@ DbErrorCode DbLayoutCircular::clearAll() {
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayoutCircular::getVersion(uint32_t& version) {
+DbErrorCode DbLayoutCircular::getVersionCircular(uint32_t& version) {
   if (!m_isDeserialized) {
     return DbErrorCode::INTERNAL;
   }
@@ -177,8 +184,8 @@ DbErrorCode DbLayoutCircular::deleteRow(std::string name) {
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayoutCircular::getAllItems(std::string name,
-                                          std::list<DbElement>& elements) {
+DbErrorCode DbLayoutCircular::getAllItemsCircular(
+    std::string name, std::list<DbElement>& elements) {
   RepeatedPtrField<DataItem> dataItems;
   DataRowCircular row;
   bool overflow;
@@ -217,11 +224,11 @@ DbErrorCode DbLayoutCircular::getAllItems(std::string name,
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayoutCircular::getItemsBetween(std::string name, int64_t start,
-                                              int64_t end,
-                                              std::list<DbElement>& elements) {
+DbErrorCode DbLayoutCircular::getItemsBetweenCircular(
+    std::string name, int64_t start, int64_t end,
+    std::list<DbElement>& elements) {
   std::list<DbElement> tempElements;
-  DbErrorCode err = getAllItems(name, tempElements);
+  DbErrorCode err = getAllItemsCircular(name, tempElements);
 
   if (err != DbErrorCode::SUCCESS) return err;
 
@@ -235,8 +242,8 @@ DbErrorCode DbLayoutCircular::getItemsBetween(std::string name, int64_t start,
 }
 
 //--------------------------------------------------------------------------------------------
-DbErrorCode DbLayoutCircular::addItem(std::string name,
-                                      const DbElement& element) {
+DbErrorCode DbLayoutCircular::addItemCircular(std::string name,
+                                              const DbElement& element) {
   RepeatedPtrField<DataItem>* dataItems;
   DataRowCircular* row;
   bool overflow;
