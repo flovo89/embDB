@@ -57,7 +57,6 @@ int DbLayoutCircular::init() {
 //--------------------------------------------------------------------------------------------
 int DbLayoutCircular::deinit() {
   if (serialize() != DbErrorCode::SUCCESS) return -1;
-
   return 0;
 }
 

@@ -50,6 +50,8 @@ static const std::string DEFAULT_PID_FILE = "/var/run/embdb.pid";
 static const std::string DEFAULT_SOCKET_PATH = "/var/run/embdb.sock";
 static const std::string DATABASE_CIRCULAR_FILE_PATH =
     "/var/data/sd/database/embdb-circular";
+static const std::string DATABASE_LINEAR_CONTROL_DIR =
+    "/var/data/sd/database/linear";
 static const int DEFAULT_TCP_PORT = 8085;
 
 /* Locals */
@@ -57,6 +59,7 @@ std::string logConfig = DEFAULT_LOG_FILE;
 std::string pidFile = DEFAULT_PID_FILE;
 std::string socketPath = DEFAULT_SOCKET_PATH;
 std::string databaseCircularPath = DATABASE_CIRCULAR_FILE_PATH;
+std::string databaseLinearDir = DATABASE_LINEAR_CONTROL_DIR;
 bool isDaemonize = false;
 int tcpport = DEFAULT_TCP_PORT;
 
@@ -76,6 +79,8 @@ void usage(const char* progname) {
             << ")" << std::endl
             << " -f | --filecircular Path to database file ("
             << DATABASE_CIRCULAR_FILE_PATH << ")" << std::endl
+            << " -e | --dirlinear    Directory for linear data ("
+            << DATABASE_LINEAR_CONTROL_DIR << ")" << std::endl
             << " -t | --tcpport      Tcp socket port (" << DEFAULT_TCP_PORT
             << ")" << std::endl;
 }
@@ -107,13 +112,14 @@ bool parseArgs(int argc, char* argv[], int& retCode) {
       {"pidfile", required_argument, NULL, 'p'},
       {"socket", required_argument, NULL, 's'},
       {"filecircular", required_argument, NULL, 'f'},
+      {"dirlinear", required_argument, NULL, 'e'},
       {"tcpport", required_argument, NULL, 't'},
       {0, 0, 0, 0}};
   int option_index = 0;
 
   while (1) {
     int c =
-        getopt_long(argc, argv, "hvl:dp:s:f:t:", long_options, &option_index);
+        getopt_long(argc, argv, "hvl:dp:s:f:e:t:", long_options, &option_index);
 
     if (c == -1) {
       break;
@@ -142,6 +148,9 @@ bool parseArgs(int argc, char* argv[], int& retCode) {
         break;
       case 'f':
         databaseCircularPath = optarg;
+        break;
+      case 'e':
+        databaseLinearDir = optarg;
         break;
       case 't':
         tcpport = atoi(optarg);
@@ -178,8 +187,8 @@ void buildDatabaseGuard(std::unique_ptr<embDB_database::DbGuard>& guard) {
       new embDB_utilities::DefaultTimestamper());
 
   std::unique_ptr<embDB_database::IDataBaseLinear> linear(
-      new embDB_database::DbLayoutLinear(std::move(hasher2),
-                                         std::move(timestamper2)));
+      new embDB_database::DbLayoutLinear(
+          std::move(hasher2), std::move(timestamper2), databaseLinearDir));
 
   std::unique_ptr<embDB_utilities::IMutex> mutex(
       new embDB_utilities::DefaultMutex());

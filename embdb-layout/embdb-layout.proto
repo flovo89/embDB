@@ -58,7 +58,7 @@ message BlobInfo {
   int32 nextIndex = 5;
   uint32 itemsCount = 6;
   uint32 serializedSize = 7;
-  repeated string names = 8;
+  repeated uint64 hashes = 8;
 }
 
 // ---- Used for linear db ----

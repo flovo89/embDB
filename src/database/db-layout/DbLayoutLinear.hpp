@@ -33,7 +33,8 @@ using namespace embDB_protolayout;
 class DbLayoutLinear : public IDataBaseLinear {
  public:
   DbLayoutLinear(std::unique_ptr<embDB_utilities::IHasher> hasher,
-                 std::unique_ptr<embDB_utilities::ITimestamper> timestamper);
+                 std::unique_ptr<embDB_utilities::ITimestamper> timestamper,
+                 std::string linearDir);
   virtual ~DbLayoutLinear();
 
   friend class DbGuard;
@@ -58,8 +59,19 @@ class DbLayoutLinear : public IDataBaseLinear {
 
   std::unique_ptr<embDB_utilities::IHasher> m_hasher;
   std::unique_ptr<embDB_utilities::ITimestamper> m_timestamper;
+  std::string m_dataDir;
+
+  bool m_isDeserialized;
+  embDB_protolayout::ControlLinear m_control;
 
   const uint32_t c_version = 1;
+  const std::string c_controlFileName = "embDB_control";
+  const int32_t c_invalidIndex = -1;
+
+  int getBlobInfo(uint32_t index, BlobInfo& blobinfo);
+  int getNextBlobInfo(const BlobInfo& reference, BlobInfo& blobinfo);
+  int getPrevBlobInfo(const BlobInfo& reference, BlobInfo& blobinfo);
+  int getDataBlob(uint32_t index, BlobLinear& blob);
 };
 
 }  // namespace embDB_database
