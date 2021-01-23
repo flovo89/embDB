@@ -42,12 +42,14 @@ class DbLayoutGuardTest : public testing::Test {
     _hasher2.reset(new embDB_utilities::DefaultHasher());
     _timestamper2.reset(new embDB_utilities::DefaultTimestamper());
     _linearDir = "./";
+    _rolloverSize = 1024;
 
     _circular.reset(
         new DbLayoutCircular(std::move(_fileReader), std::move(_fileWriter),
                              std::move(_hasher1), std::move(_timestamper1)));
     _linear.reset(new DbLayoutLinear(std::move(_hasher2),
-                                     std::move(_timestamper2), _linearDir));
+                                     std::move(_timestamper2), _linearDir,
+                                     _rolloverSize));
     _mutex.reset(new embDB_utilities::DefaultMutex());
 
     _guard.reset(new DbGuard(std::move(_circular), std::move(_linear),
@@ -62,6 +64,7 @@ class DbLayoutGuardTest : public testing::Test {
   std::unique_ptr<embDB_utilities::IHasher> _hasher2;
   std::unique_ptr<embDB_utilities::ITimestamper> _timestamper2;
   std::string _linearDir;
+  uint32_t _rolloverSize;
 
   std::unique_ptr<DbLayoutCircular> _circular;
   std::unique_ptr<DbLayoutLinear> _linear;

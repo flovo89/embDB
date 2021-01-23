@@ -53,6 +53,7 @@ static const std::string DATABASE_CIRCULAR_FILE_PATH =
 static const std::string DATABASE_LINEAR_CONTROL_DIR =
     "/var/data/sd/database/linear";
 static const int DEFAULT_TCP_PORT = 8085;
+static const int DEFAULT_ROLLOVER_SIZE = 1024;
 
 /* Locals */
 std::string logConfig = DEFAULT_LOG_FILE;
@@ -62,6 +63,7 @@ std::string databaseCircularPath = DATABASE_CIRCULAR_FILE_PATH;
 std::string databaseLinearDir = DATABASE_LINEAR_CONTROL_DIR;
 bool isDaemonize = false;
 int tcpport = DEFAULT_TCP_PORT;
+uint32_t rolloverSize = DEFAULT_ROLLOVER_SIZE;
 
 std::list<std::shared_ptr<embDB_protocol::IProtocol>> protocols;
 
@@ -75,14 +77,17 @@ void usage(const char* progname) {
             << " -d | --daemonize    Run as daemon" << std::endl
             << " -p | --pidfile      PID file (" << DEFAULT_PID_FILE << ")"
             << std::endl
-            << " -s | --socket       Path to socket (" << DEFAULT_SOCKET_PATH
-            << ")" << std::endl
+            << " -s | --socket       Path to unix-socket ("
+            << DEFAULT_SOCKET_PATH << ")" << std::endl
             << " -f | --filecircular Path to database file ("
             << DATABASE_CIRCULAR_FILE_PATH << ")" << std::endl
             << " -e | --dirlinear    Directory for linear data ("
             << DATABASE_LINEAR_CONTROL_DIR << ")" << std::endl
             << " -t | --tcpport      Tcp socket port (" << DEFAULT_TCP_PORT
-            << ")" << std::endl;
+            << ")" << std::endl
+            << " -r | --rollover     Max size to use for linear db before "
+               "rolling over ("
+            << DEFAULT_ROLLOVER_SIZE << "MB)" << std::endl;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -114,12 +119,13 @@ bool parseArgs(int argc, char* argv[], int& retCode) {
       {"filecircular", required_argument, NULL, 'f'},
       {"dirlinear", required_argument, NULL, 'e'},
       {"tcpport", required_argument, NULL, 't'},
+      {"rollover", required_argument, NULL, 'r'},
       {0, 0, 0, 0}};
   int option_index = 0;
 
   while (1) {
-    int c =
-        getopt_long(argc, argv, "hvl:dp:s:f:e:t:", long_options, &option_index);
+    int c = getopt_long(argc, argv, "hvl:dp:s:f:e:t:r:", long_options,
+                        &option_index);
 
     if (c == -1) {
       break;
@@ -155,6 +161,9 @@ bool parseArgs(int argc, char* argv[], int& retCode) {
       case 't':
         tcpport = atoi(optarg);
         break;
+      case 'r':
+        rolloverSize = (uint32_t)atoi(optarg);
+        break;
       default:
         usage(argv[0]);
         retCode = -1;
@@ -187,8 +196,9 @@ void buildDatabaseGuard(std::unique_ptr<embDB_database::DbGuard>& guard) {
       new embDB_utilities::DefaultTimestamper());
 
   std::unique_ptr<embDB_database::IDataBaseLinear> linear(
-      new embDB_database::DbLayoutLinear(
-          std::move(hasher2), std::move(timestamper2), databaseLinearDir));
+      new embDB_database::DbLayoutLinear(std::move(hasher2),
+                                         std::move(timestamper2),
+                                         databaseLinearDir, rolloverSize));
 
   std::unique_ptr<embDB_utilities::IMutex> mutex(
       new embDB_utilities::DefaultMutex());

@@ -18,6 +18,8 @@
 
 #include "DbLayoutLinear.hpp"
 
+#include <sstream>
+
 #include "../../exception/Exception.hpp"
 #include "../../file-io/FileReader.hpp"
 #include "../../file-io/FileWriter.hpp"
@@ -28,10 +30,11 @@ namespace embDB_database {
 DbLayoutLinear::DbLayoutLinear(
     std::unique_ptr<embDB_utilities::IHasher> hasher,
     std::unique_ptr<embDB_utilities::ITimestamper> timestamper,
-    std::string linearDir)
+    std::string linearDir, uint32_t rolloverSize)
     : m_hasher(std::move(hasher)),
       m_timestamper(std::move(timestamper)),
       m_dataDir(linearDir),
+      m_rolloverSize((uint64_t)rolloverSize * 1024 * 1024),
       m_isDeserialized(false) {}
 
 //--------------------------------------------------------------------------------------------
@@ -46,6 +49,10 @@ int DbLayoutLinear::init() {
     return -1;
   }
   reader.close();
+
+  if (!getBlobInfoMutable(m_control.curindex(), &m_blobInfo))
+    addBlobInfo(0, c_invalidIndex, &m_blobInfo);
+  getDataBlobMutable(m_blobInfo->index(), m_blob);
 
   m_isDeserialized = true;
   return 0;
@@ -118,37 +125,74 @@ DbErrorCode DbLayoutLinear::addItemLinear(std::string name,
 }
 
 //--------------------------------------------------------------------------------------------
-int DbLayoutLinear::getBlobInfo(uint32_t index, BlobInfo& blobinfo) {
+int DbLayoutLinear::getBlobInfoMutable(uint32_t index, BlobInfo** blobinfo) {
+  if (m_control.blobinfos_size() == 0) return 0;
   if (index >= (uint32_t)m_control.blobinfos_size()) return -1;
-  blobinfo = m_control.blobinfos()[index];
-
-  if (m_control.blobinfos_size() > 1)
-    if (blobinfo.previndex() == c_invalidIndex) return -1;
-
-  return 0;
+  *blobinfo = m_control.mutable_blobinfos(index);
+  return 1;
 }
 
 //--------------------------------------------------------------------------------------------
-int DbLayoutLinear::getNextBlobInfo(const BlobInfo& reference,
-                                    BlobInfo& blobinfo) {
-  (void)reference;
+int DbLayoutLinear::getNextBlobInfoMutable(const BlobInfo& reference,
+                                           BlobInfo** blobinfo) {
+  if (reference.nextindex() >= m_control.blobinfos_size()) return -1;
+  if (reference.nextindex() == c_invalidIndex) return 0;
+  *blobinfo = m_control.mutable_blobinfos(reference.nextindex());
+  return 1;
+}
+
+//--------------------------------------------------------------------------------------------
+int DbLayoutLinear::getPrevBlobInfoMutable(const BlobInfo& reference,
+                                           BlobInfo** blobinfo) {
+  if (reference.previndex() >= m_control.blobinfos_size()) return -1;
+  if (reference.previndex() == c_invalidIndex) return 0;
+  *blobinfo = m_control.mutable_blobinfos(reference.previndex());
+  return 1;
+}
+
+//--------------------------------------------------------------------------------------------
+int DbLayoutLinear::getDataBlobMutable(uint32_t index, BlobLinear& blob) {
+  std::stringstream ss;
+  ss << m_dataDir << "/" << c_blobPrefix << index;
+  embDB_fileio::FileReader reader(ss.str());
+  reader.open();
+  if (!blob.ParseFromIstream(&reader)) {
+    return -1;
+  }
+  reader.close();
+  return 1;
+}
+
+//--------------------------------------------------------------------------------------------
+uint32_t DbLayoutLinear::getSerializedBlobSize(const BlobLinear& blob) {
+  return static_cast<uint32_t>(blob.ByteSizeLong());
+}
+
+//--------------------------------------------------------------------------------------------
+void DbLayoutLinear::addBlobInfo(int32_t index, int32_t prevIndex,
+                                 BlobInfo** blobinfo) {
+  *blobinfo = m_control.add_blobinfos();
+  (*blobinfo)->set_index(index);
+  (*blobinfo)->set_previndex(prevIndex);
+  (*blobinfo)->set_nextindex(c_invalidIndex);
+  (*blobinfo)->set_itemscount(0);
+  (*blobinfo)->set_serializedsize(0);
+  (*blobinfo)->set_starttime(0);
+  (*blobinfo)->set_endtime(0);
+}
+
+//--------------------------------------------------------------------------------------------
+bool DbLayoutLinear::keyFoundInBlobInfo(const BlobInfo& blobinfo,
+                                        std::string& key) {
   (void)blobinfo;
-  return -1;
+  (void)key;
+  return false;
 }
 
 //--------------------------------------------------------------------------------------------
-int DbLayoutLinear::getPrevBlobInfo(const BlobInfo& reference,
-                                    BlobInfo& blobinfo) {
-  (void)reference;
+void DbLayoutLinear::addKeyToBlobInfo(BlobInfo* blobinfo, std::string& key) {
   (void)blobinfo;
-  return -1;
-}
-
-//--------------------------------------------------------------------------------------------
-int DbLayoutLinear::getDataBlob(uint32_t index, BlobLinear& blob) {
-  (void)index;
-  (void)blob;
-  return -1;
+  (void)key;
 }
 
 }  // namespace embDB_database
