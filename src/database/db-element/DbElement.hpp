@@ -22,6 +22,7 @@
 #include <variant>
 #include <vector>
 
+#include "../../../embdb-layout/cpp/embdb-layout.pb.h"
 #include "../DbElementType.hpp"
 #include "DbElement.hpp"
 
@@ -65,6 +66,7 @@ class DbElement {
   double toDouble() const;
   bool toBool() const;
   std::vector<uint8_t> toBytes() const;
+  embDB_protolayout::DataItem toDataItem() const;
 
   DbElement &operator=(const DbElement &element);
   DbElement &operator=(const std::string &value);

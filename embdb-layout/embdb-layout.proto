@@ -69,7 +69,13 @@ message ControlLinear {
 }
 
 // ---- Used for linear db ----
+message BlobItemLinear {
+  DataItem item = 1;
+  string name = 2;
+}
+
+// ---- Used for linear db ----
 message BlobLinear {
-  repeated DataItem items = 1;
+  repeated BlobItemLinear blobItems = 1;
 }
 

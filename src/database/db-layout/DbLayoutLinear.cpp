@@ -121,6 +121,21 @@ DbErrorCode DbLayoutLinear::addItemLinear(std::string name,
                                           const DbElement& element) {
   (void)name;
   (void)element;
+
+  if (!m_isDeserialized) {
+    return DbErrorCode::INTERNAL;
+  }
+
+  // TODO: Check if place --> otherwise new blob
+  
+
+  // Add to current blob
+  m_blobInfo->set_itemscount(m_blobInfo->itemscount() + 1);
+  BlobItemLinear* blobItem = m_blob.add_blobitems();
+  *blobItem->mutable_item() = element.toDataItem();
+  blobItem->set_name(name);
+  addKeyToBlobInfo(m_blobInfo, name);
+
   return DbErrorCode::SUCCESS;
 }
 
@@ -184,15 +199,17 @@ void DbLayoutLinear::addBlobInfo(int32_t index, int32_t prevIndex,
 //--------------------------------------------------------------------------------------------
 bool DbLayoutLinear::keyFoundInBlobInfo(const BlobInfo& blobinfo,
                                         std::string& key) {
-  (void)blobinfo;
-  (void)key;
-  return false;
+  const auto& hashes = blobinfo.hashes();
+  uint64_t hash = m_hasher->hashStringToUint64(key);
+  return std::find(hashes.begin(), hashes.end(), hash) != hashes.end();
 }
 
 //--------------------------------------------------------------------------------------------
 void DbLayoutLinear::addKeyToBlobInfo(BlobInfo* blobinfo, std::string& key) {
-  (void)blobinfo;
-  (void)key;
+  auto& hashes = blobinfo->hashes();
+  uint64_t hash = m_hasher->hashStringToUint64(key);
+  if (std::find(hashes.begin(), hashes.end(), hash) == hashes.end())
+    blobinfo->add_hashes(hash);
 }
 
 }  // namespace embDB_database

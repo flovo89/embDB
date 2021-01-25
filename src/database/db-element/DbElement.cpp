@@ -227,6 +227,47 @@ std::vector<uint8_t> DbElement::toBytes() const {
 }
 
 //--------------------------------------------------------------------------------------------
+embDB_protolayout::DataItem DbElement::toDataItem() const {
+  embDB_protolayout::DataItem item;
+  item.set_timestamp(m_timestamp);
+
+  switch (getType()) {
+    case DbElementType::STRING:
+      item.set_datastring(std::get<std::string>(m_value));
+      break;
+    case DbElementType::UINT32:
+      item.set_datauint32(std::get<uint32_t>(m_value));
+      break;
+    case DbElementType::INT32:
+      item.set_dataint32(std::get<int32_t>(m_value));
+      break;
+    case DbElementType::UINT64:
+      item.set_datauint64(std::get<uint64_t>(m_value));
+      break;
+    case DbElementType::INT64:
+      item.set_dataint64(std::get<int64_t>(m_value));
+      break;
+    case DbElementType::FLOAT:
+      item.set_datafloat(std::get<float>(m_value));
+      break;
+    case DbElementType::DOUBLE:
+      item.set_datadouble(std::get<double>(m_value));
+      break;
+    case DbElementType::BOOL:
+      item.set_databool(std::get<bool>(m_value));
+      break;
+    case DbElementType::BYTES:
+      item.set_databytes(
+          std::string(std::get<std::vector<uint8_t>>(m_value).begin(),
+                      std::get<std::vector<uint8_t>>(m_value).end()));
+      break;
+    default:
+      break;
+  }
+  return item;
+}
+
+//--------------------------------------------------------------------------------------------
 DbElement &DbElement::operator=(const DbElement &element) {
   switch (element.getType()) {
     case DbElementType::STRING:
