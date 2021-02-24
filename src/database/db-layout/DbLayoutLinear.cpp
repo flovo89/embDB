@@ -127,7 +127,6 @@ DbErrorCode DbLayoutLinear::addItemLinear(std::string name,
   }
 
   // TODO: Check if place --> otherwise new blob
-  
 
   // Add to current blob
   m_blobInfo->set_itemscount(m_blobInfo->itemscount() + 1);
@@ -140,9 +139,9 @@ DbErrorCode DbLayoutLinear::addItemLinear(std::string name,
 }
 
 //--------------------------------------------------------------------------------------------
-int DbLayoutLinear::getBlobInfoMutable(uint32_t index, BlobInfo** blobinfo) {
+int DbLayoutLinear::getBlobInfoMutable(int32_t index, BlobInfo** blobinfo) {
   if (m_control.blobinfos_size() == 0) return 0;
-  if (index >= (uint32_t)m_control.blobinfos_size()) return -1;
+  if (index >= m_control.blobinfos_size()) return -1;
   *blobinfo = m_control.mutable_blobinfos(index);
   return 1;
 }
@@ -166,7 +165,7 @@ int DbLayoutLinear::getPrevBlobInfoMutable(const BlobInfo& reference,
 }
 
 //--------------------------------------------------------------------------------------------
-int DbLayoutLinear::getDataBlobMutable(uint32_t index, BlobLinear& blob) {
+int DbLayoutLinear::getDataBlobMutable(int32_t index, BlobLinear& blob) {
   std::stringstream ss;
   ss << m_dataDir << "/" << c_blobPrefix << index;
   embDB_fileio::FileReader reader(ss.str());
@@ -184,6 +183,12 @@ uint32_t DbLayoutLinear::getSerializedBlobSize(const BlobLinear& blob) {
 }
 
 //--------------------------------------------------------------------------------------------
+int removeDataBlob(int32_t index) {
+  (void)index;
+  return -1;
+}
+
+//--------------------------------------------------------------------------------------------
 void DbLayoutLinear::addBlobInfo(int32_t index, int32_t prevIndex,
                                  BlobInfo** blobinfo) {
   *blobinfo = m_control.add_blobinfos();
@@ -194,6 +199,13 @@ void DbLayoutLinear::addBlobInfo(int32_t index, int32_t prevIndex,
   (*blobinfo)->set_serializedsize(0);
   (*blobinfo)->set_starttime(0);
   (*blobinfo)->set_endtime(0);
+}
+
+//--------------------------------------------------------------------------------------------
+void DbLayoutLinear::removeBlobInfo(int32_t index) {
+  auto it = m_control.mutable_blobinfos()->begin();
+  it += index;
+  it = m_control.mutable_blobinfos()->erase(it);
 }
 
 //--------------------------------------------------------------------------------------------

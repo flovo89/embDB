@@ -73,12 +73,14 @@ class DbLayoutLinear : public IDataBaseLinear {
   const int32_t c_invalidIndex = -1;
   const uint32_t c_maxBlobs = 1000;
 
-  int getBlobInfoMutable(uint32_t index, BlobInfo** blobinfo);
+  int getBlobInfoMutable(int32_t index, BlobInfo** blobinfo);
   int getNextBlobInfoMutable(const BlobInfo& reference, BlobInfo** blobinfo);
   int getPrevBlobInfoMutable(const BlobInfo& reference, BlobInfo** blobinfo);
-  int getDataBlobMutable(uint32_t index, BlobLinear& blob);
+  int getDataBlobMutable(int32_t index, BlobLinear& blob);
   uint32_t getSerializedBlobSize(const BlobLinear& blob);
+  int removeDataBlob(int32_t index);
   void addBlobInfo(int32_t index, int32_t prevIndex, BlobInfo** blobinfo);
+  void removeBlobInfo(int32_t index);
   bool keyFoundInBlobInfo(const BlobInfo& blobinfo, std::string& key);
   void addKeyToBlobInfo(BlobInfo* blobinfo, std::string& key);
 };
