@@ -50,8 +50,8 @@ int DbLayoutLinear::init() {
   }
   reader.close();
 
-  if (!getBlobInfoMutable(m_control.curindex(), &m_blobInfo))
-    addBlobInfo(0, c_invalidIndex, &m_blobInfo);
+  if (getBlobInfoMutable(m_control.curindex(), &m_blobInfo))
+    if (addBlobInfo(0, c_invalidIndex, &m_blobInfo)) return -1;
   getDataBlobMutable(m_blobInfo->index(), m_blob);
 
   m_isDeserialized = true;
@@ -72,13 +72,12 @@ DbErrorCode DbLayoutLinear::serialize() {
   // Serialize control to file
   embDB_fileio::FileWriter writer(m_dataDir + "/" + c_controlFileName);
   writer.open();
-  if (!m_control.SerializeToOstream(&writer)) {
-    return DbErrorCode::INTERNAL;
-  }
+  if (!m_control.SerializeToOstream(&writer)) return DbErrorCode::INTERNAL;
   writer.flush();
   writer.close();
 
-  // TODO: Serialize current blob to file
+  // Serialize current blob to file
+  if (serializeCurrentDataBlob()) return DbErrorCode::INTERNAL;
 
   return DbErrorCode::SUCCESS;
 }
@@ -102,6 +101,26 @@ DbErrorCode DbLayoutLinear::getAllItemsLinear(std::string name,
                                               std::list<DbElement>& elements) {
   (void)name;
   (void)elements;
+
+  elements.clear();
+  uint64_t hash = m_hasher->hashStringToUint64(name);
+  embDB_protolayout::BlobInfo* blobinfo;
+  if (getFirstBlobInfoMutable(*m_blobInfo, &blobinfo))
+    return DbErrorCode::INTERNAL;
+  do {
+    if (hashFoundInBlobInfo(*blobinfo, hash)) {
+      if (getDataBlobMutable(blobinfo->index(), m_blobTemp))
+        return DbErrorCode::INTERNAL;
+      for (auto& item : m_blobTemp.blobitems())
+        if (item.hash() == hash) {
+          DbElement dbel;
+          getDbElement(static_cast<DbElementType>(item.type()), &item.item(),
+                       dbel);
+          elements.push_back(dbel);
+        }
+    }
+  } while (getNextBlobInfoMutable(*blobinfo, &blobinfo) == 1);
+
   return DbErrorCode::SUCCESS;
 }
 
@@ -119,20 +138,22 @@ DbErrorCode DbLayoutLinear::getItemsBetweenLinear(
 //--------------------------------------------------------------------------------------------
 DbErrorCode DbLayoutLinear::addItemLinear(std::string name,
                                           const DbElement& element) {
-  (void)name;
-  (void)element;
-
   if (!m_isDeserialized) {
     return DbErrorCode::INTERNAL;
   }
 
-  // TODO: Check if place --> otherwise new blob
+  // Check if new blob needs to be started
+  if (getSerializedBlobSize(m_blob) >=
+      static_cast<uint32_t>(m_rolloverSize / c_maxBlobs))
+    if (setupNextBlob()) return DbErrorCode::INTERNAL;
 
   // Add to current blob
   m_blobInfo->set_itemscount(m_blobInfo->itemscount() + 1);
   BlobItemLinear* blobItem = m_blob.add_blobitems();
   *blobItem->mutable_item() = element.toDataItem();
   blobItem->set_name(name);
+  blobItem->set_hash(m_hasher->hashStringToUint64(name));
+  blobItem->set_type(static_cast<DataType>(element.getType()));
   addKeyToBlobInfo(m_blobInfo, name);
 
   return DbErrorCode::SUCCESS;
@@ -165,6 +186,19 @@ int DbLayoutLinear::getPrevBlobInfoMutable(const BlobInfo& reference,
 }
 
 //--------------------------------------------------------------------------------------------
+int DbLayoutLinear::getFirstBlobInfoMutable(BlobInfo& reference,
+                                            BlobInfo** blobinfo) {
+  BlobInfo* binfo = &reference;
+  while (getPrevBlobInfoMutable(*binfo, &binfo) == 1)
+    ;
+
+  if (getPrevBlobInfoMutable(*binfo, &binfo) != 0) return -1;
+  *blobinfo = binfo;
+
+  return 0;
+}
+
+//--------------------------------------------------------------------------------------------
 int DbLayoutLinear::getDataBlobMutable(int32_t index, BlobLinear& blob) {
   std::stringstream ss;
   ss << m_dataDir << "/" << c_blobPrefix << index;
@@ -174,7 +208,7 @@ int DbLayoutLinear::getDataBlobMutable(int32_t index, BlobLinear& blob) {
     return -1;
   }
   reader.close();
-  return 1;
+  return 0;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -183,22 +217,36 @@ uint32_t DbLayoutLinear::getSerializedBlobSize(const BlobLinear& blob) {
 }
 
 //--------------------------------------------------------------------------------------------
-int removeDataBlob(int32_t index) {
-  (void)index;
-  return -1;
+int DbLayoutLinear::removeDataBlob(int32_t index) {
+  std::stringstream ss;
+  ss << m_dataDir << "/" << c_blobPrefix << index;
+  return std::remove(ss.str().c_str());
 }
 
 //--------------------------------------------------------------------------------------------
-void DbLayoutLinear::addBlobInfo(int32_t index, int32_t prevIndex,
-                                 BlobInfo** blobinfo) {
-  *blobinfo = m_control.add_blobinfos();
+int DbLayoutLinear::addBlobInfo(int32_t index, int32_t prevIndex,
+                                BlobInfo** blobinfo) {
+  if (index < m_control.blobinfos_size()) {
+    if (getBlobInfoMutable(index, blobinfo) <= 0) return -1;
+    int32_t invalidate = index + 1;
+    BlobInfo* tempbinfo;
+    if (invalidate == m_control.blobinfos_size()) {
+      if (getBlobInfoMutable(0, &tempbinfo) <= 0) return -1;
+    } else {
+      if (getBlobInfoMutable(invalidate, &tempbinfo) <= 0) return -1;
+    }
+    tempbinfo->set_previndex(c_invalidIndex);
+  } else
+    *blobinfo = m_control.add_blobinfos();
+
   (*blobinfo)->set_index(index);
   (*blobinfo)->set_previndex(prevIndex);
   (*blobinfo)->set_nextindex(c_invalidIndex);
   (*blobinfo)->set_itemscount(0);
-  (*blobinfo)->set_serializedsize(0);
   (*blobinfo)->set_starttime(0);
   (*blobinfo)->set_endtime(0);
+
+  return 0;
 }
 
 //--------------------------------------------------------------------------------------------
@@ -209,10 +257,9 @@ void DbLayoutLinear::removeBlobInfo(int32_t index) {
 }
 
 //--------------------------------------------------------------------------------------------
-bool DbLayoutLinear::keyFoundInBlobInfo(const BlobInfo& blobinfo,
-                                        std::string& key) {
+bool DbLayoutLinear::hashFoundInBlobInfo(const BlobInfo& blobinfo,
+                                         uint64_t hash) {
   const auto& hashes = blobinfo.hashes();
-  uint64_t hash = m_hasher->hashStringToUint64(key);
   return std::find(hashes.begin(), hashes.end(), hash) != hashes.end();
 }
 
@@ -222,6 +269,82 @@ void DbLayoutLinear::addKeyToBlobInfo(BlobInfo* blobinfo, std::string& key) {
   uint64_t hash = m_hasher->hashStringToUint64(key);
   if (std::find(hashes.begin(), hashes.end(), hash) == hashes.end())
     blobinfo->add_hashes(hash);
+}
+
+//--------------------------------------------------------------------------------------------
+int DbLayoutLinear::serializeCurrentDataBlob() {
+  bool ret;
+  std::stringstream ss;
+  ss << m_dataDir << "/" << c_blobPrefix << m_control.curindex();
+  embDB_fileio::FileWriter writer(ss.str());
+  writer.open();
+  ret = m_control.SerializeToOstream(&writer);
+  writer.flush();
+  writer.close();
+  return ret ? 0 : -1;
+}
+
+//--------------------------------------------------------------------------------------------
+int DbLayoutLinear::setupNextBlob() {
+  // Serialize current data blob
+  if (serializeCurrentDataBlob()) return -1;
+
+  // Get next index
+  int32_t curIndex = m_control.curindex();
+  int32_t newIndex = curIndex + 1;
+  newIndex %= c_maxBlobs;
+
+  // Clear data-blob
+  m_blob.Clear();
+
+  // Set next blobinfo
+  if (addBlobInfo(newIndex, curIndex, &m_blobInfo)) return -1;
+
+  // Set new control index
+  m_control.set_curindex(newIndex);
+
+  return 0;
+}
+
+//--------------------------------------------------------------------------------------------
+void DbLayoutLinear::getDbElement(DbElementType type, const DataItem* item,
+                                  DbElement& element) {
+  std::vector<uint8_t> vec;
+
+  switch (type) {
+    case DbElementType::STRING:
+      element = DbElement(item->datastring(), item->timestamp());
+      break;
+    case DbElementType::UINT32:
+      element = DbElement(item->datauint32(), item->timestamp());
+      break;
+    case DbElementType::INT32:
+      element = DbElement(item->dataint32(), item->timestamp());
+      break;
+    case DbElementType::UINT64:
+      element = DbElement(item->datauint64(), item->timestamp());
+      break;
+    case DbElementType::INT64:
+      element = DbElement(item->dataint64(), item->timestamp());
+      break;
+    case DbElementType::FLOAT:
+      element = DbElement(item->datafloat(), item->timestamp());
+      break;
+    case DbElementType::DOUBLE:
+      element = DbElement(item->datadouble(), item->timestamp());
+      break;
+    case DbElementType::BOOL:
+      element = DbElement(item->databool(), item->timestamp());
+      break;
+    case DbElementType::BYTES:
+      vec =
+          std::vector<uint8_t>(&item->databytes()[0],
+                               &item->databytes()[item->databytes().length()]);
+      element = DbElement(vec, item->timestamp());
+      break;
+    default:
+      EMBDB_THROW("No valid type specified");
+  }
 }
 
 }  // namespace embDB_database

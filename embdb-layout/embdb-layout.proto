@@ -2,6 +2,7 @@ syntax = "proto3";
 
 package embDB_protolayout;
 
+// ---- Common ----
 message Header { uint32 version = 1; }
 
 enum DataType {
@@ -43,7 +44,6 @@ message DataRowCircular {
   repeated DataItem items = 7;
 }
 
-// ---- Used for circular db ----
 message DataLayoutCircular {
   Header header = 1;
   repeated DataRowCircular rows = 2;
@@ -57,25 +57,22 @@ message BlobInfo {
   int32 prevIndex = 4;
   int32 nextIndex = 5;
   uint32 itemsCount = 6;
-  uint32 serializedSize = 7;
   repeated uint64 hashes = 8;
 }
 
-// ---- Used for linear db ----
 message ControlLinear {
   Header header = 1;
   int32 curIndex = 2;
   repeated BlobInfo blobInfos = 3;
 }
 
-// ---- Used for linear db ----
 message BlobItemLinear {
   DataItem item = 1;
-  string name = 2;
+  DataType type = 2;
+  string name = 3;
+  uint64 hash = 4;
 }
 
-// ---- Used for linear db ----
 message BlobLinear {
   repeated BlobItemLinear blobItems = 1;
 }
-

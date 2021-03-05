@@ -66,6 +66,7 @@ class DbLayoutLinear : public IDataBaseLinear {
   embDB_protolayout::ControlLinear m_control;
   embDB_protolayout::BlobInfo* m_blobInfo;
   embDB_protolayout::BlobLinear m_blob;
+  embDB_protolayout::BlobLinear m_blobTemp;
 
   const uint32_t c_version = 1;
   const std::string c_controlFileName = "embDB_control";
@@ -76,13 +77,18 @@ class DbLayoutLinear : public IDataBaseLinear {
   int getBlobInfoMutable(int32_t index, BlobInfo** blobinfo);
   int getNextBlobInfoMutable(const BlobInfo& reference, BlobInfo** blobinfo);
   int getPrevBlobInfoMutable(const BlobInfo& reference, BlobInfo** blobinfo);
+  int getFirstBlobInfoMutable(BlobInfo& reference, BlobInfo** blobinfo);
   int getDataBlobMutable(int32_t index, BlobLinear& blob);
   uint32_t getSerializedBlobSize(const BlobLinear& blob);
   int removeDataBlob(int32_t index);
-  void addBlobInfo(int32_t index, int32_t prevIndex, BlobInfo** blobinfo);
+  int addBlobInfo(int32_t index, int32_t prevIndex, BlobInfo** blobinfo);
   void removeBlobInfo(int32_t index);
-  bool keyFoundInBlobInfo(const BlobInfo& blobinfo, std::string& key);
+  bool hashFoundInBlobInfo(const BlobInfo& blobinfo, uint64_t hash);
   void addKeyToBlobInfo(BlobInfo* blobinfo, std::string& key);
+  int serializeCurrentDataBlob();
+  int setupNextBlob();
+  void getDbElement(DbElementType type, const DataItem* item,
+                    DbElement& element);
 };
 
 }  // namespace embDB_database
